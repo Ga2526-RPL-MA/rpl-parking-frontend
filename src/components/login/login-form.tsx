@@ -4,21 +4,27 @@ import { Eye, EyeOff } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 
+import { useAuth } from "@/hooks/useAuth";
+
 import { Switch } from "@/components/ui/switch";
 
 export default function LoginForm() {
+  const { loginMutation } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    console.log("Login:", { email, password, rememberMe });
+
+    try {
+      await loginMutation.mutateAsync({ email, password });
+      console.log("Login berhasil:", { email, rememberMe });
+    } catch (error) {
+      console.error("Login gagal:", error);
+    }
   };
 
   return (
@@ -99,10 +105,10 @@ export default function LoginForm() {
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={loginMutation.isPending}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 font-semibold text-white transition-all duration-200 hover:bg-blue-700 disabled:bg-blue-400"
       >
-        {isLoading ? (
+        {loginMutation.isPending ? (
           <>
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             Memproses...
