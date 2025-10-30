@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import { authLoginApi } from "../utils/api/authLoginApi";
 import { authRegisterApi } from "../utils/api/authRegisterApi";
 
