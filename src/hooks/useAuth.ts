@@ -1,12 +1,13 @@
-// src/hooks/useAuth.ts
 import { useMutation } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
 import { authLoginApi } from "../utils/api/authLoginApi";
 import { authRegisterApi } from "../utils/api/authRegisterApi";
-// import { useRouter } from "next/navigation";
 
 export function useAuth() {
-  // const router = useRouter();
+  const router = useRouter();
 
   const loginMutation = useMutation({
     mutationFn: async ({
@@ -20,31 +21,27 @@ export function useAuth() {
     },
 
     onSuccess: (res) => {
-      console.log("Login Response:", res);
+      const token = res?.data?.token;
+      const user = res?.data?.user;
 
-     const token = res?.data?.token;
-     const user = res?.data?.user;
-     
-     if (token) {
+      if (token) {
         sessionStorage.setItem("token", token);
-     }
+      }
       if (user) {
-         sessionStorage.setItem("user", JSON.stringify(user));
+        sessionStorage.setItem("user", JSON.stringify(user));
       }
 
-      toast.success("Login berhasil 🎉", {
+      toast.success("Login berhasil", {
         description: "Selamat datang kembali di RPL Parking System!",
       });
 
-      // window.location.href = "/dashboard";
+      router.push("/dashboard")
     },
 
-    onError: (error: any) => {
+    onError: () => {
       toast.error("Login gagal!", {
-        description:
-          error?.message || "Periksa kembali email dan password kamu.",
+        description: "Periksa kembali email dan password kamu.",
       });
-      console.error("Login gagal:", error);
     },
   });
 
@@ -62,15 +59,18 @@ export function useAuth() {
     }) => {
       return await authRegisterApi.register(email, name, password, occupation);
     },
-    onSuccess: (res) => {
-      console.log("Register Response:", res);
+    onSuccess: () => {
+      toast.success("Register Berhasil");
+      router.push("/auth/login")
     },
-    onError: (error: any) => {
-      toast.error("Register gagal!", {
-        description:
-          error?.message || "Periksa kembali data kamu.",
+    onError: (error: AxiosError) => {
+      let message = "";
+      if (error.status === 400) {
+        message = "Email Sudah Digunakan";
+      }
+      toast.error("Register Gagal!", {
+        description: message,
       });
-      console.error("Register gagal:", error);
     },
   });
 

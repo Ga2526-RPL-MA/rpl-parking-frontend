@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
 
@@ -13,35 +14,38 @@ export default function RegisterForm() {
     email: "",
     password: "",
     confirmPassword: "",
-    occupation: "User",
+    occupation: "mahasiswa",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage(""); 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-	const { email, name, password, occupation } = formData;
-    if (formData.password !== formData.confirmPassword) {
-      alert("Password tidak cocok!");
+    const { email, name, password, confirmPassword, occupation } = formData;
+
+    // Validasi password minimal 6 karakter
+    if (password.length < 6) {
+      setErrorMessage("Kata sandi harus memiliki minimal 6 karakter.");
       return;
     }
-    setIsLoading(true);
-    try {
-      await registerMutation.mutateAsync({ email, name, password, occupation });
-      console.log("Berhasil register:", { email, name, occupation });
-    } catch (error) {
-      console.error("Register gagal:", error);
+
+    // Validasi konfirmasi password
+    if (password !== confirmPassword) {
+      setErrorMessage("Kata sandi dan konfirmasi tidak cocok!");
+      return;
     }
-    setIsLoading(false);
-    console.log("Register:", formData);
+
+    await registerMutation.mutateAsync({ email, name, password, occupation });
   };
 
   return (
@@ -84,14 +88,14 @@ export default function RegisterForm() {
             htmlFor="occupation"
             className="block text-sm font-medium text-gray-700"
           >
-            Role
+            Daftar Sebagai
           </label>
           <select
             id="occupation"
             name="occupation"
             value={formData.occupation}
             onChange={handleChange}
-            className="rounded-lge w-full border border-gray-300 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
             <option value="tendik">Tendik</option>
             <option value="dosen">Dosen</option>
@@ -135,7 +139,7 @@ export default function RegisterForm() {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="Minimal 8 karakter"
+            placeholder="Minimal 6 karakter"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
@@ -147,6 +151,9 @@ export default function RegisterForm() {
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
+
+        {/* 🔹 Error Message (jika ada) */}
+        {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
       </div>
 
       {/* Confirm Password Field */}
@@ -181,10 +188,10 @@ export default function RegisterForm() {
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={registerMutation.isPending}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 font-semibold text-white transition-all duration-200 hover:bg-blue-700 disabled:bg-blue-400"
       >
-        {isLoading ? (
+        {registerMutation.isPending ? (
           <>
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             Memproses...
@@ -197,9 +204,12 @@ export default function RegisterForm() {
       {/* Login Link */}
       <p className="text-center text-sm text-gray-600">
         Sudah punya akun?{" "}
-        <a href="#" className="font-semibold text-blue-600 hover:text-blue-700">
+        <Link
+          href="/auth/login"
+          className="font-semibold text-blue-600 hover:text-blue-700"
+        >
           Masuk di sini
-        </a>
+        </Link>
       </p>
     </form>
   );
