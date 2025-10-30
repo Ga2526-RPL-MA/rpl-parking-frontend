@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
 
@@ -14,17 +15,11 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
- 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      await loginMutation.mutateAsync({ email, password });
-      console.log("Login berhasil:", { email, rememberMe });
-    } catch (error) {
-      console.error("Login gagal:", error);
-    }
+    await loginMutation.mutateAsync({ email, password });
   };
 
   return (
@@ -121,9 +116,12 @@ export default function LoginForm() {
       {/* Sign Up Link */}
       <p className="text-center text-sm text-gray-600">
         Belum punya akun?{" "}
-        <a href="#" className="font-semibold text-blue-600 hover:text-blue-700">
+        <Link
+          href="/auth/register"
+          className="font-semibold text-blue-600 hover:text-blue-700"
+        >
           Daftar di sini
-        </a>
+        </Link>
       </p>
     </form>
   );

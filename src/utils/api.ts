@@ -17,8 +17,23 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Request failed");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = {};
+    }
+
+    const error = new Error(
+      errorData?.message || `Request failed with status ${response.status}`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) as any;
+
+    error.status = response.status;
+    error.data = errorData;
+
+    throw error;
   }
 
   return response.json();
