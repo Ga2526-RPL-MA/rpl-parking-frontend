@@ -4,13 +4,16 @@ import { Eye, EyeOff } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 
+import { useAuth } from "@/hooks/useAuth";
+
 export default function RegisterForm() {
+  const { registerMutation } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "User",
+    occupation: "User",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,12 +28,18 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+	const { email, name, password, occupation } = formData;
     if (formData.password !== formData.confirmPassword) {
       alert("Password tidak cocok!");
       return;
     }
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await registerMutation.mutateAsync({ email, name, password, occupation });
+      console.log("Berhasil register:", { email, name, occupation });
+    } catch (error) {
+      console.error("Register gagal:", error);
+    }
     setIsLoading(false);
     console.log("Register:", formData);
   };
@@ -72,15 +81,15 @@ export default function RegisterForm() {
         {/* Role */}
         <div className="w-1/3 space-y-2">
           <label
-            htmlFor="role"
+            htmlFor="occupation"
             className="block text-sm font-medium text-gray-700"
           >
             Role
           </label>
           <select
-            id="role"
-            name="role"
-            value={formData.role}
+            id="occupation"
+            name="occupation"
+            value={formData.occupation}
             onChange={handleChange}
             className="rounded-lge w-full border border-gray-300 px-4 py-3 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
