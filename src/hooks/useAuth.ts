@@ -2,6 +2,9 @@ import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { setToken } from "@/lib/cookies";
+
 import { authLoginApi } from "../utils/api/authLoginApi";
 import { authRegisterApi } from "../utils/api/authRegisterApi";
 
@@ -23,8 +26,9 @@ export function useAuth() {
       const token = res?.data?.token;
       const user = res?.data?.user;
 
+
       if (token) {
-        sessionStorage.setItem("token", token);
+        setToken(token);
       }
       if (user) {
         sessionStorage.setItem("user", JSON.stringify(user));

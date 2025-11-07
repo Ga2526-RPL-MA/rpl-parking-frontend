@@ -40,7 +40,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex flex-1 flex-col bg-gradient-to-b from-blue-50 to-blue-100 p-8 md:p-12 lg:p-16">
+      <div className="flex flex-1 flex-col bg-linear-to-b from-blue-50 to-blue-100 p-8 md:p-12 lg:p-16">
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
           {/* Tabs */}
           <div className="mb-8 flex justify-center gap-2">
