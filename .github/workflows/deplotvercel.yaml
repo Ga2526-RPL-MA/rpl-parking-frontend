@@ -11,17 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (optional)
+      - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js (optional)
+      - name: Build Next.js
         run: npm run build
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          vercel-args: "--prod"
           vercel-org-id: ${{ secrets.ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
