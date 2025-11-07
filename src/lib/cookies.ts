@@ -2,11 +2,17 @@ import Cookies from "universal-cookie";
 
 const cookies = new Cookies();
 
-export const getToken = (): string => cookies.get("@nexttemplate/token"); // Change with your token name
+// ✅ Get token
+export function getToken() {
+  const token = cookies.get("auth_token");
+  console.log("[getToken] token:", token);
+  return token;
+}
 
+// ✅ Set token
 export const setToken = (token: string) => {
-  cookies.set("@nexttemplate/token", token, { path: "/" }); // Change with your token name
+  cookies.set("auth_token", token, { path: "/" }); 
 };
 
-export const removeToken = () =>
-  cookies.remove("@nexttemplate/token", { path: "/" }); // Change with your token name
+// ✅ Remove token
+export const removeToken = () => cookies.remove("auth_token", { path: "/" });

@@ -52,8 +52,8 @@ const eslintConfig = [
 
     rules: {
       "no-unused-vars": "off",
-      "no-console": "warn",
       "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-explicit-any": "off",
       "react/no-unescaped-entities": "off",
       "react/display-name": "off",
 
