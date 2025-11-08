@@ -5,10 +5,6 @@ import { useRouter } from "next/navigation";
 interface Vehicle {
   id: number;
   plateNumber: string;
-  user: {
-    name: string;
-    email: string;
-  };
   type: string;
 }
 
@@ -25,9 +21,8 @@ export default function VehicleTable({ data }: Props) {
         <thead className="bg-blue-600 text-white sticky top-0 z-10">
           <tr>
             <th className="p-3">Plat Nomor</th>
-            <th className="p-4">Pemilik</th>
-            <th className="p-3">Jenis</th>
-            <th className="p-3">Detail</th>
+            <th className="p-6">Jenis</th>
+            <th className="p-2">Detail</th>
           </tr>
         </thead>
       </table>
@@ -42,10 +37,6 @@ export default function VehicleTable({ data }: Props) {
                 className="border-t hover:bg-blue-50 transition"
               >
                 <td className="p-3 font-medium">{v.plateNumber}</td>
-                <td className="p-1">
-                  <p className="font-medium">{v.user.name}</p>
-                  <p className="text-gray-500 text-sm">{v.user.email}</p>
-                </td>
 
                 <td className="p-3">
                   <span
