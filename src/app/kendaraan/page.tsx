@@ -1,5 +1,7 @@
 "use client";
 
+// NOTE : ini kan file dari kodingan desain yang lama ya, kayanya ga kepake lagi, bebas mau di hapus ato di refactor bg
+
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 

@@ -1,40 +1,23 @@
-// src/utils/api/index.ts
+// src/utils/api/api.ts
+import axios from "axios";
+
+import { getToken } from "@/lib/cookies";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  const headers: HeadersInit = {
+export const api = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+  headers: {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
+  },
+});
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let errorData: any = {};
-    try {
-      errorData = await response.json();
-    } catch {
-      errorData = {};
-    }
-
-    const error = new Error(
-      errorData?.message || `Request failed with status ${response.status}`
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ) as any;
-
-    error.status = response.status;
-    error.data = errorData;
-
-    throw error;
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
 
-  return response.json();
-}

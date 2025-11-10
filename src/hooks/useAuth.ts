@@ -22,24 +22,36 @@ export function useAuth() {
       return await authLoginApi.login(email, password);
     },
 
-    onSuccess: (res) => {
-      const token = res?.data?.token;
-      const user = res?.data?.user;
+  onSuccess: (res) => {
+  const user = res?.data;
+  const token = res?.data?.token;
+
+  console.log("USER ROLE:", user?.role);
+
+  if (token) {
+    setToken(token); 
+    localStorage.setItem("token", token); // FIX PENTING
+  }
+
+  if (user) {
+    sessionStorage.setItem("user", JSON.stringify(user));
+  }
+
+  toast.success("Login berhasil", {
+    description: "Selamat datang kembali di RPL Parking System!",
+  });
+
+  const role = user?.role?.toLowerCase();
+  if (role === "admin") {
+    router.push("/dashboard");
+  } else if (role === "user") {
+    router.push("/dashboard/user");
+  } else {
+    router.push("/");
+  }
+},
 
 
-      if (token) {
-        setToken(token);
-      }
-      if (user) {
-        sessionStorage.setItem("user", JSON.stringify(user));
-      }
-
-      toast.success("Login berhasil", {
-        description: "Selamat datang kembali di RPL Parking System!",
-      });
-
-      router.push("/dashboard")
-    },
 
     onError: () => {
       toast.error("Login gagal!", {

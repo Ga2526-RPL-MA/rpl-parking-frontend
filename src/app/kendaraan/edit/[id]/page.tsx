@@ -1,9 +1,25 @@
 "use client";
 
+//TODO: ini form editnya masih belum ke handle bang buat update data ke backendnya karena emang strukturnya belum fix
+
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { getVehicleById } from "@/lib/api";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { vehicleDetailRoute } from "@/utils/vehicleListRoute"; // pake ini bg btw buat route detail kendaraannya, aga bingung route file nya wkkw
 
 export default function EditKendaraanPage() {
   const { id } = useParams();
@@ -11,11 +27,20 @@ export default function EditKendaraanPage() {
   const [vehicle, setVehicle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const userRole = currentUser?.role;
+
   useEffect(() => {
     async function load() {
       try {
         const data = await getVehicleById(id as string);
         setVehicle(data.data);
+
+        const ownerId = data.data?.user?.id;
+        if (!(userRole === "admin" || ownerId === currentUser.id)) {
+          toast.error("Anda tidak memiliki akses untuk mengedit kendaraan ini");
+          router.push(vehicleDetailRoute(String(id)));
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -23,7 +48,7 @@ export default function EditKendaraanPage() {
       }
     }
     load();
-  }, [id]);
+  }, [id, currentUser.id, userRole, router]);
 
   if (loading)
     return (
@@ -40,93 +65,118 @@ export default function EditKendaraanPage() {
     );
 
   const handleSave = async () => {
+    const payload = {
+      plateNumber: vehicle.plateNumber,
+      type: vehicle.type,
+      brand: vehicle.brand,
+      modelName: vehicle.modelName,
+      color: vehicle.color,
+    };
+
     await fetch(`/vehicles/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(vehicle),
+      body: JSON.stringify(payload),
     });
-    alert("Data berhasil diperbarui!");
-    router.push(`/dashboard/${id}`);
+
+    toast.success("Data kendaraan berhasil diperbarui");
+    router.push(vehicleDetailRoute(String(id)));
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <header className="bg-white shadow px-8 py-4 flex justify-between">
-        <h1 className="font-semibold text-xl">Edit Kendaraan</h1>
-        <button onClick={() => router.back()} className="text-blue-600 hover:underline">
-          ← Kembali
-        </button>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF] flex justify-center items-center px-4">
+      <div className="bg-white w-full max-w-lg p-8 rounded-xl shadow-xl space-y-6 border">
+        <h1 className="text-2xl font-semibold text-gray-900 text-center">
+          Edit Kendaraan
+        </h1>
 
-      <div className="flex-1 flex justify-center items-center">
-        <div className="bg-white rounded-xl shadow p-8 w-[500px] space-y-4">
-          {/* Plat Nomor */}
-          <div>
-            <label className="block text-gray-600 mb-1 font-medium">Plat Nomor</label>
-            <input
-              value={vehicle.plateNumber}
-              placeholder={vehicle.plateNumber}
-              onChange={(e) =>
-                setVehicle({ ...vehicle, plateNumber: e.target.value })
-              }
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
+        {/* Plat Nomor */}
+        <div className="space-y-2">
+          <Label>Plat Nomor</Label>
+          <Input
+            value={vehicle.plateNumber}
+            onChange={(e) =>
+              setVehicle({ ...vehicle, plateNumber: e.target.value })
+            }
+          />
+        </div>
 
-          {/* Pemilik */}
-          <div>
-            <label className="block text-gray-600 mb-1 font-medium">Pemilik</label>
-            <input
-              value={vehicle.user?.name || ""}
-              placeholder={vehicle.user?.name || ""}
-              onChange={(e) =>
-                setVehicle({ ...vehicle, user: { ...vehicle.user, name: e.target.value } })
-              }
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
+        {/* Jenis */}
+        <div className="space-y-2">
+          <Label>Jenis Kendaraan</Label>
+          <Select
+            value={vehicle.type}
+            onValueChange={(val) => setVehicle({ ...vehicle, type: val })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Motor" />
+            </SelectTrigger>
+            <SelectContent >
+              <SelectItem value="Motor">Motor</SelectItem>
+              <SelectItem value="Mobil">Mobil</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-gray-600 mb-1 font-medium">Email</label>
-            <input
-              value={vehicle.user?.email || ""}
-              placeholder={vehicle.user?.email || ""}
-              onChange={(e) =>
-                setVehicle({ ...vehicle, user: { ...vehicle.user, email: e.target.value } })
-              }
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
+        {/* Brand */}
+        <div className="space-y-2">
+          <Label>Brand Kendaraan</Label>
+          <Input
+            value={vehicle.brand || ""}
+            onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })}
+          />
+        </div>
 
-          {/* Jenis Kendaraan */}
-          <div>
-            <label className="block text-gray-600 mb-1 font-medium">Jenis</label>
-            <select
-              value={vehicle.type}
-              onChange={(e) => setVehicle({ ...vehicle, type: e.target.value })}
-              className="w-full border rounded-lg px-3 py-2"
-            >
-              <option value="Motor">Motor</option>
-              <option value="Mobil">Mobil</option>
-            </select>
-          </div>
+        {/* Model */}
+        <div className="space-y-2">
+          <Label>Model Kendaraan</Label>
+          <Input
+            value={vehicle.modelName || ""}
+            onChange={(e) =>
+              setVehicle({ ...vehicle, modelName: e.target.value })
+            }
+          />
+        </div>
 
-          {/* Tombol aksi */}
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={() => router.push(`/kendaraan/${id}`)}
-              className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Simpan
-            </button>
-          </div>
+        {/* Warna */}
+        <div className="space-y-2">
+          <Label>Warna Kendaraan</Label>
+          <Input
+            value={vehicle.color || ""}
+            onChange={(e) => setVehicle({ ...vehicle, color: e.target.value })}
+          />
+        </div>
+
+        {/* Foto Kendaraan */}
+      <div className="space-y-2">
+        <Label>Foto Kendaraan</Label>
+        <Input
+          type="file"
+          accept="image/png, image/jpg, image/jpeg"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setVehicle({ ...vehicle, photoFile: file });
+            }
+          }}
+        />
+        <p className="text-xs text-gray-500">
+           Format yang didukung: PNG, JPG, JPEG
+        </p>
+      </div>
+
+        {/* Aksi */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push(vehicleDetailRoute(String(id)))}
+          >
+            Batal
+          </Button>
+
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
+            Simpan
+          </Button>
         </div>
       </div>
     </div>
