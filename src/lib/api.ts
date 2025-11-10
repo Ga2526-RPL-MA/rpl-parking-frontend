@@ -1,5 +1,5 @@
 // src/lib/api.ts
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { GetServerSidePropsContext } from "next/types";
 import Cookies from "universal-cookie";
 
@@ -7,7 +7,6 @@ import { getToken } from "@/lib/cookies";
 
 import baseURL from "./url";
 
-import { UninterceptedApiError } from "@/types/api";
 
 // -----------------------------------
 // 1️⃣ Server-side context
@@ -57,27 +56,35 @@ api.interceptors.request.use((config) => {
 // -----------------------------------
 // 4️⃣ Response Interceptor
 // -----------------------------------
-api.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError<UninterceptedApiError>) => {
-    if (error.response?.data.message) {
-      return Promise.reject({
-        ...error,
-        response: {
-          ...error.response,
-          data: {
-            ...error.response.data,
-            message:
-              typeof error.response.data.message === "string"
-                ? error.response.data.message
-                : Object.values(error.response.data.message)[0][0],
-          },
-        },
-      });
+api.interceptors.request.use((config) => {
+  if (!config.headers) return config;
+
+  let token: string | undefined;
+  const isBrowser = typeof window !== "undefined";
+
+  if (isBrowser) {
+    // ✅ Ambil dari cookie dulu
+    token = getToken();
+
+    // ✅ Kalau cookie tidak ada → fallback ke localStorage
+    if (!token) {
+      token = localStorage.getItem("auth_token") || undefined;
+      console.log("[API] Fallback token (localStorage):", token);
     }
-    return Promise.reject(error);
+
+  } else if (context) {
+    const cookies = new Cookies(context.req?.headers.cookie);
+    token = cookies.get("auth_token");
   }
-);
+
+  console.log("[API] Token used:", token);
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 // -----------------------------------
 // 5️⃣ API Methods
@@ -121,5 +128,10 @@ export async function getVehicleByPlate(plate: string) {
   );
   return data;
 }
+
+export const getOwnVehicles = async () => {
+  const { data } = await api.get("/vehicles/own");
+  return data;
+};
 
 export default api;

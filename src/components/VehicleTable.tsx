@@ -20,55 +20,94 @@ export default function VehicleTable({ data }: Props) {
   const router = useRouter();
 
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-      <table className="w-full text-left text-gray-700">
-        <thead className="bg-blue-600 text-white sticky top-0 z-10">
-          <tr>
-            <th className="p-3">Plat Nomor</th>
-            <th className="p-4">Pemilik</th>
-            <th className="p-3">Jenis</th>
-            <th className="p-3">Detail</th>
-          </tr>
-        </thead>
-      </table>
+    <div className="rounded-xl border border-gray-200 shadow-sm bg-white">
+      {/* Container untuk scroll */}
+      <div className="overflow-auto max-h-[400px]">
+        <table className="w-full table-fixed">
+          {/* Sticky Header */}
+          <thead className="bg-blue-600 text-white sticky top-0">
+            <tr>
+              <th className="p-4 font-semibold text-sm text-center w-1/4">
+                Plat Nomor
+              </th>
+              <th className="p-4 font-semibold text-sm text-center w-1/4">
+                Pemilik
+              </th>
+              <th className="p-4 font-semibold text-sm text-center w-1/4">
+                Jenis
+              </th>
+              <th className="p-4 font-semibold text-sm text-center w-1/4">
+                Aksi
+              </th>
+            </tr>
+          </thead>
 
-      {/* Scrollable body */}
-      <div className="max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
-        <table className="w-full text-left text-gray-700">
-          <tbody>
-            {data.map((v) => (
-              <tr
-                key={v.id}
-                className="border-t hover:bg-blue-50 transition"
-              >
-                <td className="p-3 font-medium">{v.plateNumber}</td>
-                <td className="p-1">
-                  <p className="font-medium">{v.user.name}</p>
-                  <p className="text-gray-500 text-sm">{v.user.email}</p>
-                </td>
-
-                <td className="p-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      v.type === "Mobil"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {v.type}
-                  </span>
-                </td>
-
-                <td className="p-3">
-                  <button
-                    onClick={() => router.push(`/dashboard/${v.id}`)}
-                    className="text-blue-600 hover:underline text-sm font-medium"
-                  >
-                    Detail
-                  </button>
+          {/* Table Body */}
+          <tbody className="bg-white">
+            {data.length === 0 ? (
+              <tr>
+                <td 
+                  className="p-6 text-center text-gray-500 text-sm" 
+                  colSpan={4}
+                >
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <div className="text-3xl mb-2">🚗</div>
+                    <p>Tidak ada data kendaraan</p>
+                  </div>
                 </td>
               </tr>
-            ))}
+            ) : (
+              data.map((vehicle) => (
+                <tr 
+                  key={vehicle.id}
+                  className="border-t border-gray-200 hover:bg-blue-50 transition-colors duration-150"
+                >
+                  {/* Plat Nomor */}
+                  <td className="p-4 font-medium text-gray-900 text-center w-1/4">
+                    {vehicle.plateNumber}
+                  </td>
+
+                  {/* Info Pemilik */}
+                  <td className="p-4 text-center w-1/4">
+                    <div className="flex flex-col items-center justify-center">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {vehicle.user.name}
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        {vehicle.user.email}
+                      </p>
+                    </div>
+                  </td>
+
+                  {/* Jenis Kendaraan */}
+                  <td className="p-4 text-center w-1/4">
+                    <div className="flex justify-center">
+                      <span
+                        className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                          vehicle.type.toLowerCase() === "mobil"
+                            ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                            : "bg-blue-100 text-blue-800 border border-blue-200"
+                        }`}
+                      >
+                        {vehicle.type}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Tombol Aksi */}
+                  <td className="p-4 text-center w-1/4">
+                    <div className="flex justify-center">
+                      <button
+                        onClick={() => router.push(`/dashboard/${vehicle.id}`)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                      >
+                        Detail
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

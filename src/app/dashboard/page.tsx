@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getAllVehicles } from "@/lib/api";
-import { mockVehicles } from "@/lib/mockVehicles";
 
 import NextImage from "@/components/NextImage";
 import {
@@ -149,7 +148,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Table Component */} 
-          <VehicleTable data={mockVehicles} /> 
+          <VehicleTable data={filtered} /> 
         </div>
 
         {/* RIGHT SIDEBAR SUMMARY*/}

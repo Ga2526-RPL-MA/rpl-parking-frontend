@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { getAllVehicles } from "@/lib/api";
-import { mockVehicles } from "@/lib/mockVehicles";
+import { useVehicles } from "@/hooks/useVehicles";
 
 import NextImage from "@/components/NextImage";
 import {
@@ -18,103 +17,95 @@ import {
 import UserVehicleTable from "@/components/UserVehicleTable";
 
 export default function DashboardPage() {
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const { data = [], isLoading, isError } = useVehicles();
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await getAllVehicles();
-        setVehicles(data.data || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  const filtered = vehicles.filter((v) =>
-    v.plateNumber.toLowerCase().includes(query.toLowerCase())
-  );
-
-  if (loading)
+  if (isLoading)
     return (
       <div className="h-screen flex justify-center items-center text-gray-500">
         Loading...
       </div>
     );
-    
+
+  if (isError)
+    return (
+      <div className="h-screen flex justify-center items-center text-red-500">
+        Gagal memuat data kendaraan
+      </div>
+    );
+
+const filtered = data.filter((v: any) =>
+  v.plateNumber.toLowerCase().includes(query.toLowerCase())
+);
+
 
   return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#4A4E57] via-[#D5D5D5] to-[#F5F5F5]">
-          {/* HEADER */}
-        <div className="px-6 pt-4">
-      <header className="w-full bg-white text-gray-600 rounded-2xl shadow-lg flex items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-3">
-        <NextImage
-         src="/rplparkingslogo.png"
-         alt="Logo RPL Parking"
-         width={50}
-         height={50}
-        className="object-contain"
-        />
-         <h1 className="font-semibold text-lg">RPL Parking System</h1>
-    </div>
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#4A4E57] via-[#D5D5D5] to-[#F5F5F5]">
+      {/* HEADER */}
+      <div className="px-6 pt-4">
+        <header className="w-full bg-white text-gray-600 rounded-2xl shadow-lg flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-3">
+            <NextImage
+              src="/rplparkingslogo.png"
+              alt="Logo RPL Parking"
+              width={50}
+              height={50}
+              className="object-contain"
+            />
+            <h1 className="font-semibold text-lg">RPL Parking System</h1>
+          </div>
 
-        {/* RIGHT PROFILE AREA */}
-        <div className="flex items-center gap-3">
-          <div className="text-right leading-tight hidden sm:block">
-            <p className="font-medium text-sm">Made Satya</p>
-            <p className="text-xs opacity-70">Mahasiswa</p>
-        </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right leading-tight hidden sm:block">
+              <p className="font-medium text-sm">Made Satya</p>
+              <p className="text-xs opacity-70">Mahasiswa</p>
+            </div>
 
-          {/* ✅ Dropdown Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="focus:outline-none">
-              <div className="w-10 h-10 rounded-full bg-gray-300 hover:bg-gray-400 cursor-pointer"></div>
-            </DropdownMenuTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="focus:outline-none">
+                <div className="w-10 h-10 rounded-full bg-gray-300 hover:bg-gray-400 cursor-pointer"></div>
+              </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuLabel className="text-xs text-gray-400">
-                Profile Menu
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel className="text-xs text-gray-400">
+                  Profile Menu
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
 
-              <DropdownMenuItem
-                onClick={() => router.push("/profile")}
-                className="cursor-pointer"
-              >
-                Edit Profile
-              </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push("/profile")}
+                  className="cursor-pointer"
+                >
+                  Edit Profile
+                </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={() => {
-                  document.cookie = "auth_token=; Max-Age=0; path=/";
-                  sessionStorage.clear();
-                  router.push("/auth/login");
-                }}
-                className="text-red-600 cursor-pointer"
-              >
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-    </div>
+                <DropdownMenuItem
+                  onClick={() => {
+                    document.cookie = "auth_token=; Max-Age=0; path=/";
+                    sessionStorage.clear();
+                    router.push("/auth/login");
+                  }}
+                  className="text-red-600 cursor-pointer"
+                >
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+      </div>
+
       {/* CONTENT */}
-      <div className="p-6 grid grid-cols-3 gap-6">
-        
-        {/* TABLE SECTION */}
-        <div className="col-span-3 bg-white rounded-2xl shadow p-6">
-          <h2 className="font-semibold text-xl mb-1">Garasi saya</h2>
-          <p className="text-gray-500 text-sm mb-4">
-            Kelola dan pantau kendaraan Anda di sini
-          </p>
+     <div className="flex-1 p-6">
+  <div className="bg-white rounded-2xl shadow-lg p-6">
+    {/* Header */}
+    <div className="mb-6">
+      <h2 className="font-bold text-xl text-gray-800 mb-1">Garasi saya</h2>
+      <p className="text-gray-500 text-sm">
+        Kelola dan pantau kendaraan Anda di sini
+      </p>
+        </div>
 
           <div className="flex gap-3 mb-5">
             <input
@@ -132,8 +123,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Table Component */}
-          <UserVehicleTable data={mockVehicles} />
+          <UserVehicleTable data={filtered} />
         </div>
       </div>
     </div>

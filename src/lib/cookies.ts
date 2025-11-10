@@ -1,5 +1,5 @@
+// src/lib/cookies.ts
 import Cookies from "universal-cookie";
-
 const cookies = new Cookies();
 
 // ✅ Get token

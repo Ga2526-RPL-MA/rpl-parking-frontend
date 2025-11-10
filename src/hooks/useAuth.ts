@@ -23,28 +23,25 @@ export function useAuth() {
     },
 
   onSuccess: (res) => {
-  //langsung ambil data user
-  const user = res?.data;  
+  const user = res?.data;
   const token = res?.data?.token;
 
   console.log("USER ROLE:", user?.role);
 
   if (token) {
-    setToken(token); //simpan token ke cookies
+    setToken(token); 
+    localStorage.setItem("token", token); // FIX PENTING
   }
 
-  //simpan user ke session
   if (user) {
-    sessionStorage.setItem("user", JSON.stringify(user)); 
+    sessionStorage.setItem("user", JSON.stringify(user));
   }
 
   toast.success("Login berhasil", {
     description: "Selamat datang kembali di RPL Parking System!",
   });
 
-  // Redirect berdasarkan role
   const role = user?.role?.toLowerCase();
-
   if (role === "admin") {
     router.push("/dashboard");
   } else if (role === "user") {
@@ -53,6 +50,7 @@ export function useAuth() {
     router.push("/");
   }
 },
+
 
 
     onError: () => {
