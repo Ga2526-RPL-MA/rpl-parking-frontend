@@ -1,10 +1,11 @@
 "use client";
 
 import { AxiosError } from "axios";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Camera, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import Webcam from "react-webcam";
 import { toast } from "sonner";
 
 import LoadingAnimation from "@/components/Loading";
@@ -42,6 +43,8 @@ type CreateVehicleFormValues = {
 export default function TambahKendaraanPage() {
   const router = useRouter();
   const [userRole, setUserRole] = useState<string>("user");
+  const [useCamera, setUseCamera] = useState(false);
+  const webcamRef = useRef<Webcam>(null);
   const isAdmin = userRole === "admin";
 
   const {
@@ -64,46 +67,47 @@ export default function TambahKendaraanPage() {
     },
   });
 
-  const { mutate: checkPlate, isPending: isPendingCheckPlate } =
-    usePlateNumberCheck();
-  const { mutate: createVehicle, isPending: isPendingCreateVehicle } =
-    useCreateVehicle();
+  const { mutate: checkPlate, isPending: isPendingCheckPlate } = usePlateNumberCheck();
+  const { mutate: createVehicle, isPending: isPendingCreateVehicle } = useCreateVehicle();
   const { data, isLoading: isLoadingGetUsers } = useGetUsers(isAdmin);
-
   const users = data?.data;
 
-  // Load user role from session storage
   useEffect(() => {
     const userData = sessionStorage.getItem("user");
     if (userData) {
       const user = JSON.parse(userData);
-      const role = user.role;
-      setUserRole(role);
+      setUserRole(user.role);
     }
   }, [users]);
 
-  // Automatic OCR Kalo User Upload Image
   useEffect(() => {
     const file = watch("imageFile");
-
     if (!file) return;
-
     const formData = new FormData();
     formData.append("plate", file);
-
     checkPlate(formData, {
       onSuccess: (res) => {
         setValue("plateNumber", res.data.plateNumber);
         setValue("imageUrl", res.data.image);
       },
-      onError: () => {
-        toast.error("Gagal mendeteksi plat nomor.");
-      },
+      onError: () => toast.error("Gagal mendeteksi plat nomor."),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watch("imageFile")]);
 
-  // Submit form
+  const capturePhoto = () => {
+    if (!webcamRef.current) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
+    fetch(imageSrc)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+        setValue("imageFile", file);
+        setUseCamera(false);
+        toast.success("Foto berhasil diambil!");
+      });
+  };
+
   const onSubmit = (form: CreateVehicleFormValues) => {
     const payload: CreateVehiclePayload = {
       plateNumber: form.plateNumber,
@@ -113,12 +117,7 @@ export default function TambahKendaraanPage() {
       modelName: form.modelName,
       color: form.color,
     };
-
-    //  Admin harus kirim userId
-    if (userRole === "admin") {
-      payload.userId = form.userId;
-    }
-
+    if (userRole === "admin") payload.userId = form.userId;
     createVehicle(payload, {
       onSuccess: () => {
         toast.success("Berhasil Menambah Kendaraan");
@@ -126,20 +125,13 @@ export default function TambahKendaraanPage() {
       },
       onError: (error) => {
         const err = error as AxiosError<ApiError>;
-
-        const msg =
-          err.response?.data?.message || err.response?.data?.messsage || "";
-
-        if (
-          msg.includes("Unique constraint failed") &&
-          msg.includes("plateNumber")
-        ) {
+        const msg = err.response?.data?.message || err.response?.data?.messsage || "";
+        if (msg.includes("Unique constraint failed") && msg.includes("plateNumber")) {
           toast.error("Plat nomor sudah terdaftar!", {
             description: "Silakan cek kembali atau gunakan plat nomor lain.",
           });
           return;
         }
-
         toast.error("Gagal membuat kendaraan. Terjadi kesalahan.");
       },
     });
@@ -151,16 +143,11 @@ export default function TambahKendaraanPage() {
     <div className="flex h-screen bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF]">
       <div className="flex w-full flex-col justify-center px-16">
         <div className="mx-auto max-w-lg rounded-xl bg-white p-10 shadow-md">
-          <h2 className="mb-1 text-2xl font-bold text-gray-800">
-            Tambah Kendaraan
-          </h2>
-          <p className="mb-6 text-sm text-gray-500">
-            Mohon Lengkapi Data Kendaraan
-          </p>
+          <h2 className="mb-1 text-2xl font-bold text-gray-800">Tambah Kendaraan</h2>
+          <p className="mb-6 text-sm text-gray-500">Mohon Lengkapi Data Kendaraan</p>
 
           <div className="max-h-[70vh] overflow-y-auto pr-2">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Pilih Email Pemilik (Admin only) */}
               {userRole === "admin" && (
                 <div className="space-y-2">
                   <Label>Email Pemilik Kendaraan</Label>
@@ -169,14 +156,10 @@ export default function TambahKendaraanPage() {
                     control={control}
                     rules={{ required: "Email user wajib dipilih" }}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Pilih email user" />
                         </SelectTrigger>
-
                         <SelectContent>
                           {users?.map((u) => (
                             <SelectItem key={u.id} value={u.id}>
@@ -187,50 +170,73 @@ export default function TambahKendaraanPage() {
                       </Select>
                     )}
                   />
-                  {errors.userId && (
-                    <p className="text-sm text-red-500">
-                      * {errors.userId.message}
-                    </p>
-                  )}
+                  {errors.userId && <p className="text-sm text-red-500">* {errors.userId.message}</p>}
                 </div>
               )}
 
-              {/* Upload Foto */}
               <div className="space-y-2">
                 <Label>Foto Kendaraan</Label>
-                <Input
-                  type="file"
-                  accept="image/png, image/jpg, image/jpeg"
-                  onChange={(e) =>
-                    setValue("imageFile", e.target.files?.[0] || null)
-                  }
-                />
+
+                {!useCamera ? (
+                  <div className="flex flex-col gap-2">
+                    <Input
+                      type="file"
+                      accept="image/png, image/jpg, image/jpeg"
+                      onChange={(e) => setValue("imageFile", e.target.files?.[0] || null)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setUseCamera(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Camera className="w-4 h-4" /> Gunakan Kamera
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 items-center">
+                    <Webcam
+                      ref={webcamRef}
+                      screenshotFormat="image/jpeg"
+                      videoConstraints={{ facingMode: "environment" }}
+                      className="rounded-lg border"
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={capturePhoto} type="button" className="bg-blue-600">
+                        Ambil Foto
+                      </Button>
+                      <Button
+                        onClick={() => setUseCamera(false)}
+                        type="button"
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Upload className="w-4 h-4" /> Upload File
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-sm text-red-500">
                   * Pastikan Foto Kendaraan dan Plat Nomor Terlihat Jelas
                 </p>
               </div>
 
-              {/*  Plat Nomor */}
               <div className="space-y-2">
                 <Label>Plat Nomor</Label>
                 <Input
                   placeholder="cth: L 111 ITS"
-                  {...register("plateNumber", {
-                    required: "Plat nomor wajib diisi",
-                  })}
+                  {...register("plateNumber", { required: "Plat nomor wajib diisi" })}
                   readOnly={isPendingCheckPlate}
                 />
                 <p className="text-sm text-gray-500 italic">
                   {isPendingCheckPlate ? "Mendeteksi Plat Nomor..." : ""}
                 </p>
                 {errors.plateNumber && (
-                  <p className="text-sm text-red-500">
-                    * {errors.plateNumber.message}
-                  </p>
+                  <p className="text-sm text-red-500">* {errors.plateNumber.message}</p>
                 )}
               </div>
 
-              {/* Jenis Kendaraan */}
               <div className="space-y-2">
                 <Label>Jenis Kendaraan</Label>
                 <Controller
@@ -249,62 +255,38 @@ export default function TambahKendaraanPage() {
                     </Select>
                   )}
                 />
-                {errors.type && (
-                  <p className="text-sm text-red-500">
-                    * {errors.type.message}
-                  </p>
-                )}
+                {errors.type && <p className="text-sm text-red-500">* {errors.type.message}</p>}
               </div>
 
-              {/*  Brand */}
               <div className="space-y-2">
                 <Label>Merk Kendaraan</Label>
                 <Input
-                  {...register("brand", {
-                    required: "Merk kendaraan wajib diisi",
-                  })}
+                  {...register("brand", { required: "Merk kendaraan wajib diisi" })}
                   placeholder="cth: Suzuki"
                 />
-                {errors.brand && (
-                  <p className="text-sm text-red-500">
-                    * {errors.brand.message}
-                  </p>
-                )}
+                {errors.brand && <p className="text-sm text-red-500">* {errors.brand.message}</p>}
               </div>
 
-              {/* Model */}
               <div className="space-y-2">
                 <Label>Model Kendaraan</Label>
                 <Input
-                  {...register("modelName", {
-                    required: "Model kendaraan wajib diisi",
-                  })}
+                  {...register("modelName", { required: "Model kendaraan wajib diisi" })}
                   placeholder="cth: XL7"
                 />
                 {errors.modelName && (
-                  <p className="text-sm text-red-500">
-                    * {errors.modelName.message}
-                  </p>
+                  <p className="text-sm text-red-500">* {errors.modelName.message}</p>
                 )}
               </div>
 
-              {/*  Warna */}
               <div className="space-y-2">
                 <Label>Warna Kendaraan</Label>
                 <Input
-                  {...register("color", {
-                    required: "Warna kendaraan wajib diisi",
-                  })}
+                  {...register("color", { required: "Warna kendaraan wajib diisi" })}
                   placeholder="cth: Hitam"
                 />
-                {errors.color && (
-                  <p className="text-sm text-red-500">
-                    * {errors.color.message}
-                  </p>
-                )}
+                {errors.color && <p className="text-sm text-red-500">* {errors.color.message}</p>}
               </div>
 
-              {/* Button Tambah */}
               <div className="flex justify-end">
                 <Button
                   type="submit"
@@ -319,9 +301,7 @@ export default function TambahKendaraanPage() {
                 <Button
                   variant="ghost"
                   onClick={() =>
-                    router.push(
-                      userRole === "admin" ? "/dashboard" : "/dashboard/user"
-                    )
+                    router.push(userRole === "admin" ? "/dashboard" : "/dashboard/user")
                   }
                   className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
                 >
