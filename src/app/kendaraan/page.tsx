@@ -29,14 +29,14 @@ export default function DetailKendaraanPage() {
 
   if (loading)
     return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
+      <div className="flex h-screen items-center justify-center text-gray-500">
         Loading...
       </div>
     );
 
   if (!vehicle)
     return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
+      <div className="flex h-screen items-center justify-center text-gray-500">
         Data tidak ditemukan
       </div>
     );
@@ -59,19 +59,22 @@ export default function DetailKendaraanPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <header className="bg-white shadow px-8 py-4 flex justify-between">
-        <h1 className="font-semibold text-xl">Detail Kendaraan</h1>
-        <button onClick={() => router.back()} className="text-blue-600 hover:underline">
+    <div className="flex h-screen flex-col bg-gray-50">
+      <header className="flex justify-between bg-white px-8 py-4 shadow">
+        <h1 className="text-xl font-semibold">Detail Kendaraan</h1>
+        <button
+          onClick={() => router.back()}
+          className="text-blue-600 hover:underline"
+        >
           ← Kembali
         </button>
       </header>
 
-      <div className="flex-1 flex justify-center items-center">
-        <div className="bg-white rounded-xl shadow p-8 w-[500px] space-y-4">
+      <div className="flex flex-1 items-center justify-center">
+        <div className="w-[500px] space-y-4 rounded-xl bg-white p-8 shadow">
           {["plate", "owner", "email"].map((key) => (
             <div key={key}>
-              <label className="block text-gray-600 mb-1 font-medium capitalize">
+              <label className="mb-1 block font-medium text-gray-600 capitalize">
                 {key}
               </label>
               <input
@@ -79,17 +82,19 @@ export default function DetailKendaraanPage() {
                 onChange={(e) =>
                   setVehicle({ ...vehicle, [key]: e.target.value })
                 }
-                className="w-full border rounded-lg px-3 py-2"
+                className="w-full rounded-lg border px-3 py-2"
               />
             </div>
           ))}
 
           <div>
-            <label className="block text-gray-600 mb-1 font-medium">Jenis</label>
+            <label className="mb-1 block font-medium text-gray-600">
+              Jenis
+            </label>
             <select
               value={vehicle.type}
               onChange={(e) => setVehicle({ ...vehicle, type: e.target.value })}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full rounded-lg border px-3 py-2"
             >
               <option>Motor</option>
               <option>Mobil</option>
@@ -99,13 +104,13 @@ export default function DetailKendaraanPage() {
           <div className="flex justify-end gap-3 pt-4">
             <button
               onClick={handleDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+              className="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
             >
               Hapus
             </button>
             <button
               onClick={handleSave}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
               Simpan
             </button>

@@ -7,7 +7,6 @@ import { getToken } from "@/lib/cookies";
 
 import baseURL from "./url";
 
-
 // -----------------------------------
 // 1️⃣ Server-side context
 // -----------------------------------
@@ -44,7 +43,7 @@ api.interceptors.request.use((config) => {
     token = cookies.get("auth_token"); // <-- ganti sesuai nama cookie login
   }
 
-  console.log("[API] Token used:", token);
+  // console.log("[API] Token used:", token);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -69,15 +68,14 @@ api.interceptors.request.use((config) => {
     // ✅ Kalau cookie tidak ada → fallback ke localStorage
     if (!token) {
       token = localStorage.getItem("auth_token") || undefined;
-      console.log("[API] Fallback token (localStorage):", token);
+      // console.log("[API] Fallback token (localStorage):", token);
     }
-
   } else if (context) {
     const cookies = new Cookies(context.req?.headers.cookie);
     token = cookies.get("auth_token");
   }
 
-  console.log("[API] Token used:", token);
+  // console.log("[API] Token used:", token);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

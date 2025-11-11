@@ -1,14 +1,13 @@
 "use client";
 
-// TODO : Lengkapi fitur tambah kendaraan dengan integrasi API add Kendaraan dan OCR plat nomor
-// TODO : add kendaraan sama edit kendaraan sama-sama belum fix bg buat strukturnya, jadi blum kehandle juga, masih layout sama beberapa fetch data kendaraan aja
+import { AxiosError } from "axios";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { ArrowLeft,} from "lucide-react"; 
-import { useParams,useRouter } from "next/navigation";
-import {useState } from "react";
-
-import { createVehicle, getVehicleByPlate } from "@/lib/api";
-
+import LoadingAnimation from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,181 +19,318 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useGetUsers } from "../hooks/useGetUsers";
+import {
+  CreateVehiclePayload,
+  useCreateVehicle,
+  usePlateNumberCheck,
+} from "../hooks/useMutateVehicle";
+
+import { ApiError } from "@/types/api";
+
+type CreateVehicleFormValues = {
+  userId: string;
+  plateNumber: string;
+  imageFile: File | null;
+  imageUrl: string;
+  type: string;
+  brand: string;
+  modelName: string;
+  color: string;
+};
+
 export default function TambahKendaraanPage() {
-  const [form, setForm] = useState({
-    owner: "",
-    plate: "",
-    email: "",
-    type: "Mobil",
-  });
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [vehicle, setVehicle] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("user");
-  const { id } = useParams();
+  const isAdmin = userRole === "admin";
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CreateVehicleFormValues>({
+    defaultValues: {
+      userId: "",
+      plateNumber: "",
+      imageFile: null,
+      imageUrl: "",
+      type: "",
+      brand: "",
+      modelName: "",
+      color: "",
+    },
+  });
+
+  const { mutate: checkPlate, isPending: isPendingCheckPlate } =
+    usePlateNumberCheck();
+  const { mutate: createVehicle, isPending: isPendingCreateVehicle } =
+    useCreateVehicle();
+  const { data, isLoading: isLoadingGetUsers } = useGetUsers(isAdmin);
+
+  const users = data?.data;
 
   // Load user role from session storage
-
-  // useEffect(() => {
-  //   async function load() {
-  //     try {
-  //       const data = await getVehicleById(id as string);
-  //       setVehicle(data.data);
-        
-  //       const userData = sessionStorage.getItem("user");
-  //       if (userData) {
-  //         const user = JSON.parse(userData);
-  //         setUserRole(user?.role?.toLowerCase() || "user");
-  //       }
-  //     } catch (err) {
-  //       console.error(err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  //   load();
-  // }, [id]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await createVehicle(form);
-      alert("Kendaraan berhasil ditambahkan!");
-      router.push("/dashboard");
-    } catch (err) {
-      alert("Gagal menambahkan kendaraan!");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const userData = sessionStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      const role = user.role;
+      setUserRole(role);
     }
+  }, [users]);
+
+  // Automatic OCR Kalo User Upload Image
+  useEffect(() => {
+    const file = watch("imageFile");
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("plate", file);
+
+    checkPlate(formData, {
+      onSuccess: (res) => {
+        setValue("plateNumber", res.data.plateNumber);
+        setValue("imageUrl", res.data.image);
+      },
+      onError: () => {
+        toast.error("Gagal mendeteksi plat nomor.");
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watch("imageFile")]);
+
+  // Submit form
+  const onSubmit = (form: CreateVehicleFormValues) => {
+    const payload: CreateVehiclePayload = {
+      plateNumber: form.plateNumber,
+      image: form.imageUrl,
+      type: form.type.toLowerCase() as "motor" | "mobil",
+      brand: form.brand,
+      modelName: form.modelName,
+      color: form.color,
+    };
+
+    //  Admin harus kirim userId
+    if (userRole === "admin") {
+      payload.userId = form.userId;
+    }
+
+    createVehicle(payload, {
+      onSuccess: () => {
+        toast.success("Berhasil Menambah Kendaraan");
+        router.push(userRole === "admin" ? "/dashboard" : "/dashboard/user");
+      },
+      onError: (error) => {
+        const err = error as AxiosError<ApiError>;
+
+        const msg =
+          err.response?.data?.message || err.response?.data?.messsage || "";
+
+        if (
+          msg.includes("Unique constraint failed") &&
+          msg.includes("plateNumber")
+        ) {
+          toast.error("Plat nomor sudah terdaftar!", {
+            description: "Silakan cek kembali atau gunakan plat nomor lain.",
+          });
+          return;
+        }
+
+        toast.error("Gagal membuat kendaraan. Terjadi kesalahan.");
+      },
+    });
   };
 
-  const handleCheckOCR = async () => {
-    const res = await getVehicleByPlate(form.plate);
-    console.log("Hasil OCR:", res);
-  };
-
-  // const getDashboardPath = () => {
-  //   return userRole === "admin" ? "/dashboard" : "/dashboard/user";
-  // };
+  if (isLoadingGetUsers) return <LoadingAnimation />;
 
   return (
     <div className="flex h-screen bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF]">
-      <div className="flex flex-col justify-center w-full px-16">
-        <div className="bg-white rounded-xl shadow-md p-10 max-w-lg mx-auto">
-          <h2 className="text-2xl font-bold mb-1 text-gray-800">Tambah Kendaraan</h2>
-          <p className="text-sm text-gray-500 mb-6">
-            Lengkapi data kendaraan sesuai identitas yang terdaftar pada sistem kampus
+      <div className="flex w-full flex-col justify-center px-16">
+        <div className="mx-auto max-w-lg rounded-xl bg-white p-10 shadow-md">
+          <h2 className="mb-1 text-2xl font-bold text-gray-800">
+            Tambah Kendaraan
+          </h2>
+          <p className="mb-6 text-sm text-gray-500">
+            Mohon Lengkapi Data Kendaraan
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Nama Lengkap"
-              value={form.owner}
-              onChange={(e) => setForm({ ...form, owner: e.target.value })}
-              className="border rounded-lg px-3 py-2 w-full"
-            />
+          <div className="max-h-[70vh] overflow-y-auto pr-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Pilih Email Pemilik (Admin only) */}
+              {userRole === "admin" && (
+                <div className="space-y-2">
+                  <Label>Email Pemilik Kendaraan</Label>
+                  <Controller
+                    name="userId"
+                    control={control}
+                    rules={{ required: "Email user wajib dipilih" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih email user" />
+                        </SelectTrigger>
 
-            <input
-              type="text"
-              placeholder="Plat Nomor"
-              value={form.plate}
-              onChange={(e) => setForm({ ...form, plate: e.target.value })}
-              className="border rounded-lg px-3 py-2 w-full"
-            />
+                        <SelectContent>
+                          {users?.map((u) => (
+                            <SelectItem key={u.id} value={u.id}>
+                              {u.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.userId && (
+                    <p className="text-sm text-red-500">
+                      * {errors.userId.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="border rounded-lg px-3 py-2 w-full"
-            />
+              {/* Upload Foto */}
+              <div className="space-y-2">
+                <Label>Foto Kendaraan</Label>
+                <Input
+                  type="file"
+                  accept="image/png, image/jpg, image/jpeg"
+                  onChange={(e) =>
+                    setValue("imageFile", e.target.files?.[0] || null)
+                  }
+                />
+                <p className="text-sm text-red-500">
+                  * Pastikan Foto Kendaraan dan Plat Nomor Terlihat Jelas
+                </p>
+              </div>
 
-            {/* Jenis */}
-        <div className="space-y-2">
-          <Label>Jenis Kendaraan</Label>
-          <Select
-            //value={vehicle.type}
-            //onValueChange={(val) => setVehicle({ ...vehicle, type: val })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Motor" />
-            </SelectTrigger>
-            <SelectContent >
-              <SelectItem value="Motor">Motor</SelectItem>
-              <SelectItem value="Mobil">Mobil</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+              {/*  Plat Nomor */}
+              <div className="space-y-2">
+                <Label>Plat Nomor</Label>
+                <Input
+                  placeholder="cth: L 111 ITS"
+                  {...register("plateNumber", {
+                    required: "Plat nomor wajib diisi",
+                  })}
+                  readOnly={isPendingCheckPlate}
+                />
+                <p className="text-sm text-gray-500 italic">
+                  {isPendingCheckPlate ? "Mendeteksi Plat Nomor..." : ""}
+                </p>
+                {errors.plateNumber && (
+                  <p className="text-sm text-red-500">
+                    * {errors.plateNumber.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Brand */}
-        <div className="space-y-2">
-          <Label>Brand Kendaraan</Label>
-          <Input
-            //value={vehicle.brand || ""}
-            //onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })}
-          />
-        </div>
+              {/* Jenis Kendaraan */}
+              <div className="space-y-2">
+                <Label>Jenis Kendaraan</Label>
+                <Controller
+                  name="type"
+                  control={control}
+                  rules={{ required: "Jenis kendaraan wajib dipilih" }}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih jenis" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Motor">Motor</SelectItem>
+                        <SelectItem value="Mobil">Mobil</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.type && (
+                  <p className="text-sm text-red-500">
+                    * {errors.type.message}
+                  </p>
+                )}
+              </div>
 
-        {/* Warna */}
-        <div className="space-y-2">
-          <Label>Warna Kendaraan</Label>
-          <Input
-           // value={vehicle.color || ""}
-            //onChange={(e) => setVehicle({ ...vehicle, color: e.target.value })}
-          />
-        </div>
+              {/*  Brand */}
+              <div className="space-y-2">
+                <Label>Merk Kendaraan</Label>
+                <Input
+                  {...register("brand", {
+                    required: "Merk kendaraan wajib diisi",
+                  })}
+                  placeholder="cth: Suzuki"
+                />
+                {errors.brand && (
+                  <p className="text-sm text-red-500">
+                    * {errors.brand.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Foto Kendaraan */}
-          <div className="space-y-2">
-            <Label>Foto Kendaraan</Label>
-            <Input
-              type="file"
-              accept="image/png, image/jpg, image/jpeg"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  //setVehicle({ ...vehicle, photoFile: file });
-                }
-              }}
-            />
-            <p className="text-xs text-gray-500">
-              Format yang didukung: PNG, JPG, JPEG
-            </p>
+              {/* Model */}
+              <div className="space-y-2">
+                <Label>Model Kendaraan</Label>
+                <Input
+                  {...register("modelName", {
+                    required: "Model kendaraan wajib diisi",
+                  })}
+                  placeholder="cth: XL7"
+                />
+                {errors.modelName && (
+                  <p className="text-sm text-red-500">
+                    * {errors.modelName.message}
+                  </p>
+                )}
+              </div>
+
+              {/*  Warna */}
+              <div className="space-y-2">
+                <Label>Warna Kendaraan</Label>
+                <Input
+                  {...register("color", {
+                    required: "Warna kendaraan wajib diisi",
+                  })}
+                  placeholder="cth: Hitam"
+                />
+                {errors.color && (
+                  <p className="text-sm text-red-500">
+                    * {errors.color.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Button Tambah */}
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  className="bg-blue-600"
+                  disabled={isPendingCreateVehicle || !watch("imageUrl")}
+                >
+                  {isPendingCreateVehicle ? "Loading..." : "Tambah"}
+                </Button>
+              </div>
+
+              <div className="mt-1 text-center">
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    router.push(
+                      userRole === "admin" ? "/dashboard" : "/dashboard/user"
+                    )
+                  }
+                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Kembali ke Dashboard
+                </Button>
+              </div>
+            </form>
           </div>
-
-            <div className="flex justify-between">
-              <button
-                type="button"
-                onClick={handleCheckOCR}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
-              >
-                Cek dari OCR
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                {loading ? "Menyimpan..." : "Daftar"}
-              </button>
-            </div>
-
-              {/* Tombol Kembali */}
-              <div className="text-center mt-1">
-            <Button 
-              variant="ghost" 
-              // onClick={() => router.push(getDashboardPath())}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Kembali ke Dashboard
-            </Button>
-          </div>
-
-          </form>
         </div>
       </div>
     </div>

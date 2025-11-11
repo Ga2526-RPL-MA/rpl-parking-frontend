@@ -5,13 +5,13 @@ const cookies = new Cookies();
 // ✅ Get token
 export function getToken() {
   const token = cookies.get("auth_token");
-  console.log("[getToken] token:", token);
+  // console.log("[getToken] token:", token);
   return token;
 }
 
 // ✅ Set token
 export const setToken = (token: string) => {
-  cookies.set("auth_token", token, { path: "/" }); 
+  cookies.set("auth_token", token, { path: "/" });
 };
 
 // ✅ Remove token
