@@ -5,11 +5,14 @@ import { toast } from "sonner";
 
 import { setToken } from "@/lib/cookies";
 
+import { useAuthStore } from "@/store/useAuthStore";
+
 import { authLoginApi } from "../utils/api/authLoginApi";
 import { authRegisterApi } from "../utils/api/authRegisterApi";
 
 export function useAuth() {
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
 
   const loginMutation = useMutation({
     mutationFn: async ({
@@ -22,36 +25,33 @@ export function useAuth() {
       return await authLoginApi.login(email, password);
     },
 
-  onSuccess: (res) => {
-  const user = res?.data;
-  const token = res?.data?.token;
+    onSuccess: (res) => {
+      const user = res?.data;
+      const token = res?.data?.token;
 
-  console.log("USER ROLE:", user?.role);
+      if (token) {
+        setToken(token);
+        login(user);
+        localStorage.setItem("token", token); // FIX PENTING
+      }
 
-  if (token) {
-    setToken(token); 
-    localStorage.setItem("token", token); // FIX PENTING
-  }
+      if (user) {
+        sessionStorage.setItem("user", JSON.stringify(user));
+      }
 
-  if (user) {
-    sessionStorage.setItem("user", JSON.stringify(user));
-  }
+      toast.success("Login berhasil", {
+        description: "Selamat datang kembali di RPL Parking System!",
+      });
 
-  toast.success("Login berhasil", {
-    description: "Selamat datang kembali di RPL Parking System!",
-  });
-
-  const role = user?.role?.toLowerCase();
-  if (role === "admin") {
-    router.push("/dashboard");
-  } else if (role === "user") {
-    router.push("/dashboard/user");
-  } else {
-    router.push("/");
-  }
-},
-
-
+      const role = user?.role?.toLowerCase();
+      if (role === "admin") {
+        router.push("/dashboard");
+      } else if (role === "user") {
+        router.push("/dashboard/user");
+      } else {
+        router.push("/");
+      }
+    },
 
     onError: () => {
       toast.error("Login gagal!", {
@@ -76,7 +76,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       toast.success("Register Berhasil");
-      router.push("/auth/login")
+      router.push("/auth/login");
     },
     onError: (error: AxiosError) => {
       let message = "";

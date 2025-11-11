@@ -46,7 +46,7 @@ export default function AuthPage() {
           <div className="mb-8 flex justify-center gap-2">
             <button
               onClick={() => handleTabClick("login")}
-              className={`rounded-full px-6 py-2 font-medium transition-all hover:cursor-pointer  ${
+              className={`rounded-full px-6 py-2 font-medium transition-all hover:cursor-pointer ${
                 activeTab === "login"
                   ? "bg-blue-600 text-white"
                   : "bg-transparent text-gray-600 hover:text-gray-900"
@@ -56,7 +56,7 @@ export default function AuthPage() {
             </button>
             <button
               onClick={() => handleTabClick("register")}
-              className={`rounded-full px-6 py-2 font-medium transition-all hover:cursor-pointer  ${
+              className={`rounded-full px-6 py-2 font-medium transition-all hover:cursor-pointer ${
                 activeTab === "register"
                   ? "bg-blue-600 text-white"
                   : "bg-transparent text-gray-600 hover:text-gray-900"

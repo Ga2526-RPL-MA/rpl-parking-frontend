@@ -52,14 +52,14 @@ export default function EditKendaraanPage() {
 
   if (loading)
     return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
+      <div className="flex h-screen items-center justify-center text-gray-500">
         Loading...
       </div>
     );
 
   if (!vehicle)
     return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
+      <div className="flex h-screen items-center justify-center text-gray-500">
         Data tidak ditemukan
       </div>
     );
@@ -84,9 +84,9 @@ export default function EditKendaraanPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF] flex justify-center items-center px-4">
-      <div className="bg-white w-full max-w-lg p-8 rounded-xl shadow-xl space-y-6 border">
-        <h1 className="text-2xl font-semibold text-gray-900 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF] px-4">
+      <div className="w-full max-w-lg space-y-6 rounded-xl border bg-white p-8 shadow-xl">
+        <h1 className="text-center text-2xl font-semibold text-gray-900">
           Edit Kendaraan
         </h1>
 
@@ -111,7 +111,7 @@ export default function EditKendaraanPage() {
             <SelectTrigger>
               <SelectValue placeholder="Motor" />
             </SelectTrigger>
-            <SelectContent >
+            <SelectContent>
               <SelectItem value="Motor">Motor</SelectItem>
               <SelectItem value="Mobil">Mobil</SelectItem>
             </SelectContent>
@@ -148,22 +148,22 @@ export default function EditKendaraanPage() {
         </div>
 
         {/* Foto Kendaraan */}
-      <div className="space-y-2">
-        <Label>Foto Kendaraan</Label>
-        <Input
-          type="file"
-          accept="image/png, image/jpg, image/jpeg"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              setVehicle({ ...vehicle, photoFile: file });
-            }
-          }}
-        />
-        <p className="text-xs text-gray-500">
-           Format yang didukung: PNG, JPG, JPEG
-        </p>
-      </div>
+        <div className="space-y-2">
+          <Label>Foto Kendaraan</Label>
+          <Input
+            type="file"
+            accept="image/png, image/jpg, image/jpeg"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setVehicle({ ...vehicle, photoFile: file });
+              }
+            }}
+          />
+          <p className="text-xs text-gray-500">
+            Format yang didukung: PNG, JPG, JPEG
+          </p>
+        </div>
 
         {/* Aksi */}
         <div className="flex justify-end gap-3 pt-4">
@@ -174,7 +174,10 @@ export default function EditKendaraanPage() {
             Batal
           </Button>
 
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleSave}
+          >
             Simpan
           </Button>
         </div>

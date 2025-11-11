@@ -2,7 +2,12 @@
 import api from "@/lib/api";
 
 export const authRegisterApi = {
-  register: async (email: string, name: string, password: string, occupation: string) => {
+  register: async (
+    email: string,
+    name: string,
+    password: string,
+    occupation: string
+  ) => {
     const { data } = await api.post("/auth/register", {
       email,
       name,

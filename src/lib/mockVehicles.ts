@@ -17,7 +17,7 @@ export const mockVehicles = [
     user: { name: "Ahmad Wijaya", email: "ahmad@its.ac.id" },
     type: "Mobil",
   },
-   {
+  {
     id: 4,
     plateNumber: "B 1234 ABC",
     user: { name: "Cindy Revalia", email: "cindy@its.ac.id" },
@@ -35,7 +35,7 @@ export const mockVehicles = [
     user: { name: "Ahmad Wijaya", email: "ahmad@its.ac.id" },
     type: "Mobil",
   },
-    {
+  {
     id: 7,
     plateNumber: "B 5678 DEF",
     user: { name: "Siti Nurhaliza", email: "siti@its.ac.id" },
