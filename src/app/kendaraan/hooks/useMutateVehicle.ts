@@ -80,3 +80,33 @@ export const useDeleteVehicle = () => {
     },
   });
 };
+
+export const useUpdateVehicle = () => {
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Partial<CreateVehiclePayload>;
+    }) => {
+      const res = await api.patch(`/vehicles/${id}`, payload);
+      return res.data;
+    },
+
+    onSuccess: () => {
+      toast.success("Kendaraan berhasil diperbarui");
+    },
+
+    onError: (error: any) => {
+      const msg =
+        error.response?.data?.message ||
+        error.response?.data?.messsage ||
+        "Gagal update kendaraan";
+
+      toast.error("Gagal memperbarui kendaraan", {
+        description: msg,
+      });
+    },
+  });
+};

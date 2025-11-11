@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Bike, Car, Mail, User } from "lucide-react";
+import { ArrowLeft, Bike, Briefcase, Car, Mail, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -16,43 +16,48 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { useDeleteVehicle } from "@/app/kendaraan/hooks/useMutateVehicle";
+import {
+  useDeleteVehicle,
+  useUpdateVehicle,
+} from "@/app/kendaraan/hooks/useMutateVehicle";
 
 interface DetailItemProps {
   label: string;
-  value: string | number;
-  badge?: string;
+  value: string;
+  field?: string;
   icon?: React.ReactNode;
+  isEditing?: boolean;
+  onChange?: (field: string, value: string) => void;
 }
 
-const DetailItem: React.FC<DetailItemProps> = ({
+const DetailItem = ({
   label,
   value,
-  badge,
+  field,
   icon,
-}) => (
+  isEditing = false,
+  onChange,
+}: DetailItemProps) => (
   <div className="flex flex-col">
-    <label className="mb-1 text-xs font-normal text-gray-500">{label}</label>
+    <label className="mb-1 text-xs text-gray-500">{label}</label>
+
     <div className="flex items-center justify-between border-b border-gray-200 pb-1">
-      <div className="flex items-center">
+      <div className="flex w-full items-center">
         {icon}
-        <p className="text-base text-gray-800">{value}</p>
+
+        {!isEditing ? (
+          <p className="text-base text-gray-800">{value}</p>
+        ) : (
+          <input
+            className="w-full rounded border px-2 py-1 text-sm"
+            value={value}
+            onChange={(e) => onChange?.(field!, e.target.value)}
+          />
+        )}
       </div>
-      {badge && (
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-            badge.toLowerCase() === "mahasiswa"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-gray-100 text-gray-700"
-          }`}
-        >
-          {badge}
-        </span>
-      )}
     </div>
   </div>
 );
-// --- Akhir Komponen DetailItem ---
 
 export default function DetailKendaraanPage() {
   const { id } = useParams();
@@ -61,8 +66,20 @@ export default function DetailKendaraanPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("user");
 
-  const { mutate: deleteVehicle, isPending } = useDeleteVehicle();
+  const { mutate: deleteVehicle, isPending: isDeleting } = useDeleteVehicle();
+  const { mutate: updateVehicle, isPending: isUpdating } = useUpdateVehicle();
 
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [formData, setFormData] = useState({
+    plateNumber: "",
+    brand: "",
+    modelName: "",
+    color: "",
+    type: "",
+  });
+
+  // Load kendaraan
   useEffect(() => {
     async function load() {
       try {
@@ -72,10 +89,8 @@ export default function DetailKendaraanPage() {
         const userData = sessionStorage.getItem("user");
         if (userData) {
           const user = JSON.parse(userData);
-          setUserRole(user?.role?.toLowerCase() || "user");
+          setUserRole(user.role?.toLowerCase() || "user");
         }
-      } catch (err) {
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -83,39 +98,59 @@ export default function DetailKendaraanPage() {
     load();
   }, [id]);
 
-  const getDashboardPath = () => {
-    return userRole === "admin" ? "/dashboard" : "/dashboard/user";
-  };
+  // Set form data ketika data datang
+  useEffect(() => {
+    if (vehicle) {
+      setFormData({
+        plateNumber: vehicle.plateNumber,
+        brand: vehicle.brand,
+        modelName: vehicle.modelName,
+        color: vehicle.color,
+        type: vehicle.type,
+      });
+    }
+  }, [vehicle]);
 
-  const handleDelete = async (id: string) => {
+  const getDashboardPath = () =>
+    userRole === "admin" ? "/dashboard" : "/dashboard/user";
+
+  const handleDelete = (id: string) => {
     if (confirm("Yakin hapus kendaraan ini?")) {
       deleteVehicle(id);
     }
   };
 
+  const handleSave = () => {
+    updateVehicle({
+      id: vehicle.id,
+      payload: { ...formData, type: formData.type as "mobil" | "motor" },
+    });
+    setIsEditing(false);
+  };
+
   if (loading)
     return (
-      <div className="flex h-screen items-center justify-center text-gray-500">
+      <div className="flex h-screen items-center justify-center">
         Loading...
       </div>
     );
 
   if (!vehicle)
     return (
-      <div className="flex h-screen items-center justify-center text-gray-500">
+      <div className="flex h-screen items-center justify-center">
         Data tidak ditemukan
       </div>
     );
 
   return (
     <div className="flex h-screen flex-col lg:flex-row">
-      {/* Kolom Kiri */}
+      {/* Gambar */}
       <div className="flex h-full w-full items-center justify-center bg-black/5 lg:w-1/2">
-        <div className="w-full max-w-[500px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+        <div className="w-full max-w-[500px] overflow-hidden rounded-xl border bg-white shadow-lg">
           <NextImage
-            src={vehicle?.image}
+            src={vehicle.image}
             alt="Kendaraan"
-            serverStaticImg={true}
+            serverStaticImg
             className="w-full object-cover"
             width={690}
             height={600}
@@ -123,25 +158,23 @@ export default function DetailKendaraanPage() {
         </div>
       </div>
 
-      {/* Kolom Kanan: Form Detail*/}
+      {/* Detail */}
       <div className="flex w-full items-center justify-center bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF] p-4 sm:p-8 lg:w-2/3">
-        <Card className="w-full max-w-lg border-none p-6 shadow-xl sm:p-8">
+        <Card className="w-full max-w-lg border-none p-6 shadow-xl">
           <CardHeader className="pb-8 text-center">
-            <CardTitle className="text-3xl font-semibold text-gray-900">
+            <CardTitle className="text-3xl font-semibold">
               Detail Kendaraan
             </CardTitle>
-            <CardDescription className="mt-2 text-gray-500">
-              Lihat dan kelola data kendaraan yang terdaftar di sistem kampus
-            </CardDescription>
+            <CardDescription>Lihat atau ubah data kendaraan</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-8">
-            {/* Informasi Pemilik — hanya untuk Admin */}
+
+          <CardContent className="space-y-5">
+            {/* Admin only: info pemilik */}
             {userRole === "admin" && (
               <div className="space-y-4">
                 <DetailItem
                   label="Nama Lengkap"
                   value={vehicle.user?.name || "-"}
-                  badge={vehicle.user?.occupation || "Mahasiswa"}
                   icon={<User className="mr-2 h-4 w-4 text-gray-400" />}
                 />
                 <DetailItem
@@ -149,29 +182,31 @@ export default function DetailKendaraanPage() {
                   value={vehicle.user?.email || "-"}
                   icon={<Mail className="mr-2 h-4 w-4 text-gray-400" />}
                 />
+                <DetailItem
+                  label="Sebagai"
+                  value={vehicle.user?.occupation || "-"}
+                  icon={<Briefcase className="mr-2 h-4 w-4 text-gray-400" />}
+                />
               </div>
             )}
 
-            {/* Informasi Kendaraan */}
+            {/* Detail kendaraan */}
             <div className="space-y-4">
-              {/* Plat Nomor + Jenis Kendaraan (badge) */}
               <DetailItem
                 label="Plat Nomor"
-                value={vehicle.plateNumber || "-"}
-                badge={vehicle.type || "Mobil"}
-                icon={
-                  vehicle.type?.toLowerCase() === "motor" ? (
-                    <Bike className="mr-2 h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Car className="mr-2 h-4 w-4 text-gray-400" />
-                  )
-                }
+                field="plateNumber"
+                value={formData.plateNumber}
+                isEditing={isEditing}
+                onChange={(f, v) => setFormData({ ...formData, [f]: v })}
+                icon={<Car className="mr-2 h-4 w-4 text-gray-400" />}
               />
 
-              {/* Brand */}
               <DetailItem
                 label="Brand"
-                value={vehicle.brand || "-"}
+                field="brand"
+                value={formData.brand}
+                isEditing={isEditing}
+                onChange={(f, v) => setFormData({ ...formData, [f]: v })}
                 icon={
                   vehicle.type?.toLowerCase() === "motor" ? (
                     <Bike className="mr-2 h-4 w-4 text-gray-400" />
@@ -181,10 +216,12 @@ export default function DetailKendaraanPage() {
                 }
               />
 
-              {/* Model */}
               <DetailItem
                 label="Model"
-                value={vehicle.modelName || "-"}
+                field="modelName"
+                value={formData.modelName}
+                isEditing={isEditing}
+                onChange={(f, v) => setFormData({ ...formData, [f]: v })}
                 icon={
                   vehicle.type?.toLowerCase() === "motor" ? (
                     <Bike className="mr-2 h-4 w-4 text-gray-400" />
@@ -194,10 +231,12 @@ export default function DetailKendaraanPage() {
                 }
               />
 
-              {/* Warna */}
               <DetailItem
                 label="Warna"
-                value={vehicle.color || "-"}
+                field="color"
+                value={formData.color}
+                isEditing={isEditing}
+                onChange={(f, v) => setFormData({ ...formData, [f]: v })}
                 icon={
                   vehicle.type?.toLowerCase() === "motor" ? (
                     <Bike className="mr-2 h-4 w-4 text-gray-400" />
@@ -208,36 +247,60 @@ export default function DetailKendaraanPage() {
               />
             </div>
 
-            {/* Tombol Aksi admin & user */}
-            {(userRole === "admin" ||
-              vehicle.user?.id ===
-                JSON.parse(sessionStorage.getItem("user") || "{}")?.id) && (
-              <div className="flex flex-col justify-center gap-4 pt-4 sm:flex-row">
-                <Button
-                  onClick={() => router.push(`/kendaraan/edit/${id}`)}
-                  className="flex-1 bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700"
-                  size="lg"
-                >
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => handleDelete(vehicle?.id)}
-                  className="flex-1 bg-red-600 py-2 font-semibold text-white hover:bg-red-700"
-                  size="lg"
-                  disabled={isPending}
-                >
-                  {isPending ? "Menghapus..." : "Hapus"}
-                </Button>
-              </div>
-            )}
+            {/* Tombol */}
+            <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+              {!isEditing ? (
+                <>
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Edit
+                  </Button>
+
+                  <Button
+                    onClick={() => handleDelete(vehicle.id)}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Menghapus..." : "Hapus"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleSave}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "Menyimpan..." : "Simpan"}
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setFormData({
+                        plateNumber: vehicle.plateNumber,
+                        brand: vehicle.brand,
+                        modelName: vehicle.modelName,
+                        color: vehicle.color,
+                        type: vehicle.type,
+                      });
+                    }}
+                    className="flex-1 bg-gray-500 hover:bg-gray-600"
+                  >
+                    Batal
+                  </Button>
+                </>
+              )}
+            </div>
           </CardContent>
 
-          {/* Tombol Kembali */}
           <div className="mt-1 text-center">
             <Button
               variant="ghost"
               onClick={() => router.push(getDashboardPath())}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-1 text-sm"
             >
               <ArrowLeft className="h-4 w-4" />
               Kembali ke Dashboard
