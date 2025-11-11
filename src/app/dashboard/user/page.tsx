@@ -117,7 +117,7 @@ export default function DashboardPage() {
           <div className="mb-5 flex gap-3">
             <input
               type="text"
-              placeholder="Masukkan plat nomor kendaraan"
+              placeholder="Cari berdasarkan plat nomor kendaraan"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="flex-1 rounded-full border px-4 py-2 transition focus:border-blue-500 focus:ring-1 focus:ring-blue-400"

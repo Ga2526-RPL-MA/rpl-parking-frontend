@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage,persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import { removeToken, setToken } from "@/lib/cookies";
 

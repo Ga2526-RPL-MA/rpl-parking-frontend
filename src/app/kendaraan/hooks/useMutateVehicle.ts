@@ -1,6 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import api from "@/lib/api";
+
+import { useAuthStore } from "@/store/useAuthStore";
 
 export type CreateVehiclePayload = {
   userId?: string;
@@ -11,6 +15,13 @@ export type CreateVehiclePayload = {
   modelName: string;
   color: string;
 };
+export type PlateNumberCheckResponse = {
+  message: string;
+  data: {
+    plateNumber: string;
+    image: string;
+  };
+};
 
 export const useCreateVehicle = () => {
   return useMutation({
@@ -19,14 +30,6 @@ export const useCreateVehicle = () => {
       return res.data;
     },
   });
-};
-
-export type PlateNumberCheckResponse = {
-  message: string;
-  data: {
-    plateNumber: string;
-    image: string;
-  };
 };
 
 export const usePlateNumberCheck = () => {
@@ -43,6 +46,37 @@ export const usePlateNumberCheck = () => {
       );
       return response.data;
     },
+    onSuccess: () => {
+      toast.success("Berhasil deteksi plat nomor");
+    },
+    onError: () => {
+      toast.error("Gagal mendeteksi plat nomor", {
+        description:
+          "Mohon upload gambar dengan plat nomor yang terlihat jelas",
+      });
+    },
   });
   return { mutate, isPending };
+};
+
+export const useDeleteVehicle = () => {
+  const userRole = useAuthStore((state) => state.user?.role);
+  const getDashboardPath = () => {
+    return userRole === "admin" ? "/dashboard" : "/dashboard/user";
+  };
+
+  const router = useRouter();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/vehicles/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Kendaraan berhasil dihapus");
+      router.push(getDashboardPath());
+    },
+    onError: () => {
+      toast.error("Gagal menghapus kendaraan");
+    },
+  });
 };

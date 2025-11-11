@@ -16,6 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { useDeleteVehicle } from "@/app/kendaraan/hooks/useMutateVehicle";
+
 interface DetailItemProps {
   label: string;
   value: string | number;
@@ -59,6 +61,8 @@ export default function DetailKendaraanPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("user");
 
+  const { mutate: deleteVehicle, isPending } = useDeleteVehicle();
+
   useEffect(() => {
     async function load() {
       try {
@@ -78,18 +82,14 @@ export default function DetailKendaraanPage() {
     }
     load();
   }, [id]);
-  console.log(vehicle);
-  console.log(vehicle?.image);
 
   const getDashboardPath = () => {
     return userRole === "admin" ? "/dashboard" : "/dashboard/user";
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (id: string) => {
     if (confirm("Yakin hapus kendaraan ini?")) {
-      // memakai getDashboardPath supaya setelah hapus, user diarahkan ke dashboard sesuai role
-      await fetch(`/vehicles/${id}`, { method: "DELETE" });
-      router.push(getDashboardPath());
+      deleteVehicle(id);
     }
   };
 
@@ -221,11 +221,12 @@ export default function DetailKendaraanPage() {
                   Edit
                 </Button>
                 <Button
-                  onClick={handleDelete}
+                  onClick={() => handleDelete(vehicle?.id)}
                   className="flex-1 bg-red-600 py-2 font-semibold text-white hover:bg-red-700"
                   size="lg"
+                  disabled={isPending}
                 >
-                  Hapus Data
+                  {isPending ? "Menghapus..." : "Hapus"}
                 </Button>
               </div>
             )}
