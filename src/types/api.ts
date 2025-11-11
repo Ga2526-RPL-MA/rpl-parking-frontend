@@ -23,6 +23,7 @@ export type ApiError = {
   code: number;
   status: boolean | number;
   message: string;
+  messsage: string;
   error: string;
 };
 

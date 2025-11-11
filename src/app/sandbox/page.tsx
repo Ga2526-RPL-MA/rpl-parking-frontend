@@ -16,7 +16,6 @@ export default function SandboxPage() {
             <Button variant="outline">{item.name}</Button>
           </Link>
         ))}
-        
       </div>
     </main>
   );
