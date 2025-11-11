@@ -89,12 +89,6 @@ export default function LoginForm() {
             Ingat saya di perangkat ini
           </span>
         </label>
-        <a
-          href="#"
-          className="text-sm font-medium text-blue-600 hover:text-blue-700"
-        >
-          Lupa kata sandi?
-        </a>
       </div>
 
       {/* Submit Button */}
