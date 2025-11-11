@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import LoadingAnimation from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,12 +145,7 @@ export default function TambahKendaraanPage() {
     });
   };
 
-  if (isLoadingGetUsers)
-    return (
-      <div className="flex h-screen items-center justify-center text-gray-500">
-        Loading...
-      </div>
-    );
+  if (isLoadingGetUsers) return <LoadingAnimation />;
 
   return (
     <div className="flex h-screen bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF]">

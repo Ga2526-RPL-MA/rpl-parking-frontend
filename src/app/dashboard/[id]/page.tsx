@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { getVehicleById } from "@/lib/api";
 
+import LoadingAnimation from "@/components/Loading";
 import NextImage from "@/components/NextImage";
 import { Button } from "@/components/ui/button";
 import {
@@ -128,12 +129,7 @@ export default function DetailKendaraanPage() {
     setIsEditing(false);
   };
 
-  if (loading)
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
+  if (loading) return <LoadingAnimation />;
 
   if (!vehicle)
     return (

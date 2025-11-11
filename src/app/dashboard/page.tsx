@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { getAllVehicles } from "@/lib/api";
 
+import LoadingAnimation from "@/components/Loading";
 import NextImage from "@/components/NextImage";
 import {
   DropdownMenu,
@@ -45,12 +46,7 @@ export default function DashboardPage() {
     v.plateNumber.toLowerCase().includes(query.toLowerCase())
   );
 
-  if (loading)
-    return (
-      <div className="flex h-screen items-center justify-center text-gray-500">
-        Loading...
-      </div>
-    );
+  if (loading) return <LoadingAnimation />;
 
   //right sidebar calculations progress bars
   const totalMotor = vehicles.filter(
@@ -85,12 +81,14 @@ export default function DashboardPage() {
               height={50}
               className="object-contain"
             />
-            <h1 className="text-lg font-semibold">RPL Parking System</h1>
+            <h1 className="hidden text-lg font-semibold sm:block">
+              RPL Parking System
+            </h1>
           </div>
 
           {/* RIGHT PROFILE AREA */}
           <div className="flex items-center gap-3">
-            <div className="hidden text-right leading-tight sm:block">
+            <div className="text-right leading-tight">
               <p className="text-sm font-medium">{user?.name}</p>
               <p className="text-xs opacity-70">{user?.role}</p>
             </div>
@@ -134,36 +132,9 @@ export default function DashboardPage() {
 
       {/* CONTENT */}
       <div className="flex-1 px-6 py-4">
-        <div className="grid w-full grid-cols-3 gap-6">
-          {/* TABLE SECTION */}
-          <div className="col-span-2 rounded-2xl bg-white p-6 shadow">
-            <h2 className="mb-1 text-xl font-semibold">Cek Data Kendaraan</h2>
-            <p className="mb-4 text-sm text-gray-500">
-              Masukkan plat nomor untuk melihat detail kendaraan
-            </p>
-
-            <div className="mb-5 flex gap-3">
-              <input
-                type="text"
-                placeholder="Cari berdasarkan plat nomor"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 rounded-full border px-4 py-2 transition focus:border-blue-500 focus:ring-1 focus:ring-blue-400"
-              />
-              <button
-                onClick={() => router.push("/kendaraan/tambah")}
-                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                + Tambah Kendaraan
-              </button>
-            </div>
-
-            {/* Table Component */}
-            <VehicleTable data={filtered} />
-          </div>
-
-          {/* RIGHT SIDEBAR SUMMARY*/}
-          <div className="flex flex-col gap-4">
+        <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-3">
+          {/* SIDEBAR SUMMARY */}
+          <div className="order-1 col-span-1 flex flex-col gap-4 md:order-2">
             {/* Total Kendaraan */}
             <div className="rounded-2xl bg-white p-5 text-center shadow">
               <h3 className="mb-2 font-medium text-gray-600">
@@ -206,6 +177,32 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500">Total Mobil / 20</p>
               <p className="text-3xl font-bold text-blue-600">{totalMobil}</p>
             </div>
+          </div>
+
+          {/* TABLE SECTION */}
+          <div className="order-2 col-span-1 rounded-2xl bg-white p-6 shadow md:order-1 md:col-span-2">
+            <h2 className="mb-1 text-xl font-semibold">Cek Data Kendaraan</h2>
+            <p className="mb-4 text-sm text-gray-500">
+              Masukkan plat nomor untuk melihat detail kendaraan
+            </p>
+
+            <div className="mb-5 flex flex-col gap-3 md:flex-row">
+              <input
+                type="text"
+                placeholder="Cari berdasarkan plat nomor"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="flex-1 rounded-full border px-4 py-2 transition focus:border-blue-500 focus:ring-1 focus:ring-blue-400"
+              />
+              <button
+                onClick={() => router.push("/kendaraan/tambah")}
+                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:cursor-pointer hover:bg-blue-700"
+              >
+                + Tambah Kendaraan
+              </button>
+            </div>
+
+            <VehicleTable data={filtered} />
           </div>
         </div>
       </div>

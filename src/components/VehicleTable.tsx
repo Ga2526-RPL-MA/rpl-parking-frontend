@@ -23,7 +23,7 @@ export default function VehicleTable({ data }: Props) {
   const router = useRouter();
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Scroll container */}
       <div className="max-h-[400px] overflow-auto">
         <table className="w-full table-fixed">
@@ -128,7 +128,7 @@ export default function VehicleTable({ data }: Props) {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => router.push(`/dashboard/${vehicle.id}`)}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                      className="text-sm font-medium text-blue-600 hover:cursor-pointer hover:text-blue-800 hover:underline"
                     >
                       Detail
                     </button>

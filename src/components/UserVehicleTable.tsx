@@ -12,10 +12,10 @@ export default function UserVehicleTable({ data }: Props) {
   const router = useRouter();
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      {/* Container untuk scroll */}
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      {/* Container untuk scroll vertikal */}
       <div className="max-h-[400px] overflow-auto">
-        <table className="w-full table-fixed">
+        <table className="w-full min-w-[700px] table-fixed">
           <thead className="sticky top-0 bg-blue-600 text-white">
             <tr>
               <th className="w-1/3 p-4 text-center text-sm font-semibold">
@@ -42,7 +42,7 @@ export default function UserVehicleTable({ data }: Props) {
           <tbody className="bg-white">
             {data.length === 0 ? (
               <tr>
-                <td className="p-6 text-center text-gray-500" colSpan={3}>
+                <td className="p-6 text-center text-gray-500" colSpan={6}>
                   <div className="flex flex-col items-center justify-center py-4">
                     <div className="mb-2 text-3xl">🚗</div>
                     <p className="text-sm">Belum ada kendaraan terdaftar</p>
@@ -59,7 +59,6 @@ export default function UserVehicleTable({ data }: Props) {
                     {vehicle.plateNumber}
                   </td>
 
-                  {/* Jenis */}
                   <td className="w-1/3 p-3 text-center">
                     <div className="flex justify-center">
                       <span
@@ -74,26 +73,22 @@ export default function UserVehicleTable({ data }: Props) {
                     </div>
                   </td>
 
-                  {/* Merk */}
                   <td className="w-1/3 p-4 text-center font-medium text-gray-900">
                     {vehicle.brand}
                   </td>
 
-                  {/* Model */}
                   <td className="w-1/3 p-4 text-center font-medium text-gray-900">
                     {vehicle.modelName}
                   </td>
 
-                  {/* Warna */}
                   <td className="w-1/3 p-4 text-center font-medium text-gray-900">
                     {vehicle.color}
                   </td>
 
-                  {/* Detail */}
                   <td className="w-1/3 p-4 text-center">
                     <button
                       onClick={() => router.push(`/dashboard/${vehicle.id}`)}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                      className="text-sm font-medium text-blue-600 hover:cursor-pointer hover:text-blue-800 hover:underline"
                     >
                       Detail
                     </button>
