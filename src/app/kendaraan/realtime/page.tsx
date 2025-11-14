@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { toast } from "sonner";
 
@@ -29,8 +29,9 @@ export default function RealTimePlateMonitor() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning) interval = setInterval(captureFrame, 2000);
+    if (isRunning) interval = setInterval(captureFrame, 10000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
 
   const captureFrame = async () => {
@@ -43,48 +44,55 @@ export default function RealTimePlateMonitor() {
       const formData = new FormData();
       formData.append("plate", blob, "frame.jpg");
 
-      const detectResponse = await api.post("/vehicles/plate", formData, {
+      const detectResponse = await api.post("/vehicles/plate/realtime", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const detectedPlate =
-        detectResponse.data?.data?.plateNumber?.trim()?.toUpperCase() ?? "UNKNOWN";
-      if (detectedPlate === "UNKNOWN") {
+      const detectedData = detectResponse.data?.data;
+      if (!detectedData) {
         toast.warning("Plat tidak terdeteksi");
         return;
       }
 
-      if (detectedPlate === lastPlate) return;
-      setLastPlate(detectedPlate);
-
-      let vehicleData = null;
-      try {
-        const vehicleResponse = await api.get(`/vehicles/${detectedPlate}`);
-        vehicleData = vehicleResponse.data?.data;
-      } catch {
-        vehicleData = null;
+      // Jika backend mengirim "UNKNOWN"
+      if (detectedData === "UNKNOWN") {
+        toast.warning("Plat tidak terdeteksi");
+        return;
       }
 
-      const matched = !!vehicleData;
+      const plateNumber = detectedData.plateNumber;
+      const vehicle = detectedData.vehicle;
+
+      if (!plateNumber) {
+        toast.warning("Plat tidak terdeteksi");
+        return;
+      }
+
+      if (plateNumber === lastPlate) return;
+      setLastPlate(plateNumber);
+
+      const matched = !!vehicle;
+      const ownerName = vehicle?.user?.name ?? "-";
+
       setDetections((prev) => [
         {
-          plate: detectedPlate,
+          plate: plateNumber,
           matched,
-          image: vehicleData?.image,
+          image: undefined,
           time: new Date().toLocaleTimeString(),
-          ownerName: vehicleData?.ownerName ?? "-",
-          type: vehicleData?.type ?? "-",
-          brand: vehicleData?.brand ?? "-",
-          model: vehicleData?.model ?? "-",
-          color: vehicleData?.color ?? "-",
+          ownerName,
+          type: vehicle?.type ?? "-",
+          brand: vehicle?.brand ?? "-",
+          model: vehicle?.modelName ?? "-",
+          color: vehicle?.color ?? "-",
         },
         ...prev.slice(0, 19),
       ]);
 
       if (matched) {
-        toast.success(`Plat ${detectedPlate} terdaftar`);
+        toast.success(`Plat ${plateNumber} terdaftar (${ownerName})`);
       } else {
-        toast.warning(`Plat ${detectedPlate} tidak dikenal`);
+        toast.warning(`Plat ${plateNumber} tidak dikenal`);
       }
     } catch (error) {
       console.error("Detection error:", error);
@@ -93,7 +101,7 @@ export default function RealTimePlateMonitor() {
   };
 
   return (
-    <div className="flex flex-col items-center p-8 bg-gradient-to-b from-gray-100 to-blue-50 min-h-screen">
+    <div className="flex flex-col items-center p-8 bg-linear-to-b from-gray-100 to-blue-50 min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Real-time Plate Monitoring</h1>
       <Card className="p-4 shadow-lg w-[800px]">
         <CardContent className="flex flex-col items-center gap-3">
