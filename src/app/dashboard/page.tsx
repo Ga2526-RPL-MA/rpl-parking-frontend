@@ -200,6 +200,12 @@ export default function DashboardPage() {
               >
                 + Tambah Kendaraan
               </button>
+                 <button
+                onClick={() => router.push("/kendaraan/realtime")}
+                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:cursor-pointer hover:bg-blue-700"
+              >
+                Real Time Camera
+              </button>
             </div>
 
             <VehicleTable data={filtered} />
