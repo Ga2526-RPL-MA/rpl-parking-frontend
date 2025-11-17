@@ -110,3 +110,34 @@ export const useUpdateVehicle = () => {
     },
   });
 };
+
+// ==== Toggle Parking Hook =====
+export const useToggleParking = () => {
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: number;
+      status: "in" | "out";
+    }) => {
+      const res = await api.patch(`/vehicles/parkir/${id}`, { status });
+      return res.data;
+    },
+
+    onSuccess: (data) => {
+      toast.success("Status parkir berhasil diupdate");
+    },
+
+    onError: (error: any) => {
+      const msg =
+        error.response?.data?.message ||
+        error.response?.data?.messsage ||
+        "Gagal update status parkir";
+
+      toast.error("Gagal update status parkir", {
+        description: msg,
+      });
+    },
+  });
+};

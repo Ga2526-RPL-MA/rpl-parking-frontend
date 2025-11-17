@@ -1,5 +1,5 @@
 export type Vehicle = {
-  id: string;
+  id: number;
   plateNumber: string;
   image: string;
   type: "motor" | "mobil";

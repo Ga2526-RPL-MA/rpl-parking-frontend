@@ -101,76 +101,81 @@ export default function RealTimePlateMonitor() {
   };
 
   return (
-    <div className="flex flex-col items-center p-8 bg-linear-to-b from-gray-100 to-blue-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Real-time Plate Monitoring</h1>
-      <Card className="p-4 shadow-lg w-[800px]">
-        <CardContent className="flex flex-col items-center gap-3">
-          <Webcam
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            videoConstraints={{ facingMode: "environment" }}
-            className="rounded-lg border"
-            width={700}
-            height={400}
-          />
-          <div className="flex gap-3 mt-3 items-center">
-            <Button
-              onClick={() => setIsRunning(!isRunning)}
-              className={isRunning ? "bg-red-600" : "bg-green-600"}
+  <div className="flex flex-col items-center p-4 md:p-8 bg-linear-to-b from-gray-100 to-blue-50 min-h-screen">
+    <h1 className="text-xl md:text-2xl font-bold mb-4">Real-time Plate Monitoring</h1>
+
+    <Card className="p-4 shadow-lg w-full max-w-3xl">
+      <CardContent className="flex flex-col items-center gap-3">
+
+        {/* WEBCAM RESPONSIVE */}
+        <Webcam
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          videoConstraints={{ facingMode: "environment" }}
+          className="rounded-lg border w-full h-auto"
+        />
+
+        {/* BUTTONS RESPONSIVE */}
+        <div className="flex flex-wrap gap-3 mt-3 items-center justify-center">
+          <Button
+            onClick={() => setIsRunning(!isRunning)}
+            className={isRunning ? "bg-red-600" : "bg-green-600"}
+          >
+            {isRunning ? "Stop Monitoring" : "Start Monitoring"}
+          </Button>
+
+          {lastPlate && (
+            <div
+              className={`px-4 py-2 rounded-lg text-white ${
+                detections[0]?.matched ? "bg-green-500" : "bg-red-500"
+              }`}
             >
-              {isRunning ? "Stop Monitoring" : "Start Monitoring"}
-            </Button>
-            {lastPlate && (
-              <div
-                className={`px-4 py-2 rounded-lg text-white ${
-                  detections[0]?.matched ? "bg-green-500" : "bg-red-500"
-                }`}
-              >
-                Last: {lastPlate}
-              </div>
-            )}
-          </div>
-          <div className="mt-6 w-full max-h-[350px] overflow-y-auto text-sm">
-            <table className="w-full border-collapse text-left">
-              <thead className="bg-gray-200 sticky top-0">
-                <tr>
-                  <th className="p-2">Waktu</th>
-                  <th className="p-2">Plat</th>
-                  <th className="p-2">Pemilik</th>
-                  <th className="p-2">Jenis</th>
-                  <th className="p-2">Merk</th>
-                  <th className="p-2">Model</th>
-                  <th className="p-2">Warna</th>
-                  <th className="p-2">Status</th>
+              Last: {lastPlate}
+            </div>
+          )}
+        </div>
+
+        {/* TABLE WRAPPER RESPONSIVE */}
+        <div className="mt-6 w-full max-h-[350px] overflow-y-auto overflow-x-auto text-sm">
+          <table className="w-full min-w-[700px] border-collapse text-left">
+            <thead className="bg-gray-200 sticky top-0">
+              <tr>
+                <th className="p-2">Waktu</th>
+                <th className="p-2">Plat</th>
+                <th className="p-2">Pemilik</th>
+                <th className="p-2">Jenis</th>
+                <th className="p-2">Merk</th>
+                <th className="p-2">Model</th>
+                <th className="p-2">Warna</th>
+                <th className="p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detections.map((d, idx) => (
+                <tr
+                  key={idx}
+                  className={`border-b ${
+                    d.matched ? "text-green-700 bg-green-50" : "text-red-700 bg-red-50"
+                  }`}
+                >
+                  <td className="p-2">{d.time}</td>
+                  <td className="p-2 font-semibold">{d.plate}</td>
+                  <td className="p-2">{d.ownerName}</td>
+                  <td className="p-2">{d.type}</td>
+                  <td className="p-2">{d.brand}</td>
+                  <td className="p-2">{d.model}</td>
+                  <td className="p-2">{d.color}</td>
+                  <td className="p-2">
+                    {d.matched ? "✔ Terdaftar" : "✖ Tidak dikenal"}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {detections.map((d, idx) => (
-                  <tr
-                    key={idx}
-                    className={`border-b ${
-                      d.matched
-                        ? "text-green-700 bg-green-50"
-                        : "text-red-700 bg-red-50"
-                    }`}
-                  >
-                    <td className="p-2">{d.time}</td>
-                    <td className="p-2 font-semibold">{d.plate}</td>
-                    <td className="p-2">{d.ownerName}</td>
-                    <td className="p-2">{d.type}</td>
-                    <td className="p-2">{d.brand}</td>
-                    <td className="p-2">{d.model}</td>
-                    <td className="p-2">{d.color}</td>
-                    <td className="p-2">
-                      {d.matched ? "✔ Terdaftar" : "✖ Tidak dikenal"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+      </CardContent>
+    </Card>
+  </div>
+);
 }

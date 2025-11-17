@@ -1,8 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter} from "next/navigation";
+import { useState } from "react";
+
+import { Switch } from "@/components/ui/switch";
+
+import { useToggleParking } from "@/app/kendaraan/hooks/useMutateVehicle";
 
 import { Vehicle } from "@/types/vehicle";
+
 
 interface Props {
   data: Vehicle[];
@@ -10,6 +16,34 @@ interface Props {
 
 export default function UserVehicleTable({ data }: Props) {
   const router = useRouter();
+
+    // State toggle parkir untuk masing-masing kendaraan
+    const [parkingState, setParkingState] = useState<Record<number, boolean>>({});
+  
+    const { mutate: toggleParking } = useToggleParking();
+
+    const handleToggle = (id: number, val: boolean) => {
+  const status = val ? "in" : "out";
+
+  // Update UI dulu (optimistic UI)
+  setParkingState((prev) => ({
+    ...prev,
+    [id]: val,
+  }));
+
+  toggleParking(
+    { id, status },
+    {
+      onError: () => {
+        // rollback UI jika gagal
+        setParkingState((prev) => ({
+          ...prev,
+          [id]: !val,
+        }));
+      },
+    }
+  );
+};
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -22,16 +56,16 @@ export default function UserVehicleTable({ data }: Props) {
                 Plat Nomor
               </th>
               <th className="w-1/3 p-4 text-center text-sm font-semibold">
-                Jenis
+                jenis
+              </th>
+              <th className="w-1/3 p-4 text-center text-sm font-semibold">
+                Parkir
               </th>
               <th className="w-1/3 p-4 text-center text-sm font-semibold">
                 Merk
               </th>
               <th className="w-1/3 p-4 text-center text-sm font-semibold">
                 Model
-              </th>
-              <th className="w-1/3 p-4 text-center text-sm font-semibold">
-                Warna
               </th>
               <th className="w-1/3 p-4 text-center text-sm font-semibold">
                 Aksi
@@ -73,16 +107,27 @@ export default function UserVehicleTable({ data }: Props) {
                     </div>
                   </td>
 
+                  {/* Toggle status Parkir */}
+                  <td className="p-4 text-center">
+                    <div className="flex justify-center">
+                      <Switch
+                        checked={parkingState[vehicle.id] ?? false}
+                        onCheckedChange={(val) =>
+                          handleToggle(vehicle.id, val)
+                        }
+                      />
+                      <span className="ml-2 text-sm font-medium">
+                        {parkingState[vehicle.id] ? "in" : "out"}
+                      </span>
+                    </div>
+                  </td>
+
                   <td className="w-1/3 p-4 text-center font-medium text-gray-900">
                     {vehicle.brand}
                   </td>
 
                   <td className="w-1/3 p-4 text-center font-medium text-gray-900">
                     {vehicle.modelName}
-                  </td>
-
-                  <td className="w-1/3 p-4 text-center font-medium text-gray-900">
-                    {vehicle.color}
                   </td>
 
                   <td className="w-1/3 p-4 text-center">

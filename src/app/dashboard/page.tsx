@@ -177,6 +177,19 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500">Total Mobil / 20</p>
               <p className="text-3xl font-bold text-blue-600">{totalMobil}</p>
             </div>
+
+               {/* total kendaraan terparkir */}
+            <div className="rounded-2xl bg-white p-5 text-center shadow">
+              <h3 className="mb-2 font-medium text-gray-600">Total Kendaraan Terparkir</h3>
+              <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-blue-200">
+                <div
+                  className="h-2 rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${mobilProgress}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-500">Mobil & motor</p>
+              <p className="text-3xl font-bold text-blue-600">{totalMobil}</p>
+            </div>
           </div>
 
           {/* TABLE SECTION */}
