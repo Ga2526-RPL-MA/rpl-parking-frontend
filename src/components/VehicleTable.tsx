@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useEffect } from "react";
 
 import { Switch } from "@/components/ui/switch";
 
@@ -14,6 +15,7 @@ interface Vehicle {
   modelName: string;
   color: string;
   type: string;
+  isParked: boolean;  
   user: {
     name: string;
     email: string;
@@ -31,6 +33,18 @@ export default function VehicleTable({ data }: Props) {
   const [parkingState, setParkingState] = useState<Record<number, boolean>>({});
 
   const { mutate: toggleParking } = useToggleParking();
+  // Sinkronkan state awal dengan data dari backend
+  useEffect(() => {
+  const initialState: Record<number, boolean> = {};
+
+  data.forEach((vehicle) => {
+    // Pastikan backend punya field isParked
+    initialState[vehicle.id] = vehicle.isParked ?? false;
+  });
+
+  setParkingState(initialState);
+}, [data]);
+
 
 const handleToggle = (id: number, val: boolean) => {
   const status = val ? "in" : "out";

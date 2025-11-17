@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { toast } from "sonner";
@@ -23,9 +25,29 @@ interface Detection {
 
 export default function RealTimePlateMonitor() {
   const webcamRef = useRef<Webcam>(null);
+  const router = useRouter();
   const [isRunning, setIsRunning] = useState(false);
   const [detections, setDetections] = useState<Detection[]>([]);
   const [lastPlate, setLastPlate] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string>("user");
+
+    // Countdown 10 detik sebelum monitoring dimulai
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      setCountdown(null);
+      setIsRunning(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -100,9 +122,63 @@ export default function RealTimePlateMonitor() {
     }
   };
 
+  {/* fungsi back to dashboard by role */}
+  useEffect(() => {
+  const userData = sessionStorage.getItem("user");
+  if (userData) {
+    const user = JSON.parse(userData);
+    setUserRole(user.role?.toLowerCase() || "user");
+  }
+}, []);
+
+const getDashboardPath = () =>
+  userRole === "admin" ? "/dashboard" : "/dashboard/user";
+
+
   return (
   <div className="flex flex-col items-center p-4 md:p-8 bg-linear-to-b from-gray-100 to-blue-50 min-h-screen">
     <h1 className="text-xl md:text-2xl font-bold mb-4">Real-time Plate Monitoring</h1>
+
+        {/* COUNTDOWN OVERLAY */}
+{countdown !== null && (
+  <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md">
+
+    <div className="text-white text-2xl font-semibold mb-6 animate-pulse text-center">
+      Plat diScan! Jaga device-mu tetap stabil ya..
+    </div>
+
+    {/* Countdown Circle */}
+    <div className="flex flex-col items-center">
+
+      <div className="flex items-center justify-center w-40 h-40 rounded-full border-4 border-white mb-6">
+        <span className="text-6xl font-bold text-white">
+          {countdown}
+        </span>
+      </div>
+
+      {/* Mini webcam preview */}
+      <div className="w-90 rounded-lg overflow-hidden border-2 border-white shadow-xl">
+        <Webcam
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          videoConstraints={{ facingMode: "environment" }}
+          className="w-full h-auto"
+        />
+      </div>
+    </div>
+  </div>
+)}
+
+    <div className="mt-1 text-center">
+      <Button
+        variant="ghost"
+        onClick={() => router.push(getDashboardPath())}
+        className="flex items-center gap-1 text-sm"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Kembali ke Dashboard
+      </Button>
+    </div>
 
     <Card className="p-4 shadow-lg w-full max-w-3xl">
       <CardContent className="flex flex-col items-center gap-3">
@@ -118,11 +194,18 @@ export default function RealTimePlateMonitor() {
         {/* BUTTONS RESPONSIVE */}
         <div className="flex flex-wrap gap-3 mt-3 items-center justify-center">
           <Button
-            onClick={() => setIsRunning(!isRunning)}
-            className={isRunning ? "bg-red-600" : "bg-green-600"}
+            onClick={() => {
+              if (isRunning) {
+                setIsRunning(false);
+              } else {
+                setCountdown(10); // countdown 10s
+              }
+            }}
+            className={isRunning ? "bg-red-600" : "bg-blue-600"}
           >
             {isRunning ? "Stop Monitoring" : "Start Monitoring"}
           </Button>
+
 
           {lastPlate && (
             <div

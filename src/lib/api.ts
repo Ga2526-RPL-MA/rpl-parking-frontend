@@ -132,4 +132,16 @@ export const getOwnVehicles = async () => {
   return data;
 };
 
+export async function getParkirOverview() {
+  try {
+    const res = await api.get("/vehicles/parkir");
+    // axios menyimpan body di res.data
+    return res.data; 
+  } catch (err) {
+    console.error("getParkirOverview error:", err);
+    throw err;
+  }
+}
+
+
 export default api;

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getAllVehicles } from "@/lib/api";
+import { getAllVehicles, getParkirOverview } from "@/lib/api";
 
 import LoadingAnimation from "@/components/Loading";
 import NextImage from "@/components/NextImage";
@@ -21,6 +21,11 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 export default function DashboardPage() {
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [parkirOverview, setParkirOverview] = useState({
+    totalVehicles: 0,
+    totalIsParkedVehicle: 0,
+    totalIsNotParkedVehicle: 0,
+  });
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -31,10 +36,17 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const data = await getAllVehicles();
-        setVehicles(data.data || []);
+        // Ambil semua kendaraan
+        const all = await getAllVehicles();
+        setVehicles(all?.data || []);
+
+        // Ambil overview parkir (axios)
+        const parkir = await getParkirOverview();
+        if (parkir?.data) {
+          setParkirOverview(parkir.data);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard load error:", err);
       } finally {
         setLoading(false);
       }
@@ -68,6 +80,12 @@ export default function DashboardPage() {
     100
   );
 
+  // ambil dari api
+  const totalIsParked = parkirOverview.totalIsParkedVehicle || 0;
+  const totalVehiclesAll = parkirOverview.totalVehicles || 0;
+  const parkedProgress =
+    totalVehiclesAll > 0 ? Math.min((totalIsParked / totalVehiclesAll) * 100, 100) : 0;
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#4A4E57] via-[#D5D5D5] to-[#F5F5F5]">
       {/* HEADER */}
@@ -93,7 +111,6 @@ export default function DashboardPage() {
               <p className="text-xs opacity-70">{user?.role}</p>
             </div>
 
-            {/* ✅ Dropdown Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger className="focus:outline-none">
                 <div className="h-10 w-10 cursor-pointer rounded-full bg-gray-300 hover:bg-gray-400"></div>
@@ -104,14 +121,6 @@ export default function DashboardPage() {
                   Profile Menu
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-
-                {/* TODO: Integrate Profile Endpoint */}
-                {/* <DropdownMenuItem
-                  onClick={() => router.push("/profile")}
-                  className="cursor-pointer"
-                >
-                  Edit Profile
-                </DropdownMenuItem> */}
 
                 <DropdownMenuItem
                   onClick={() => {
@@ -178,17 +187,19 @@ export default function DashboardPage() {
               <p className="text-3xl font-bold text-blue-600">{totalMobil}</p>
             </div>
 
-               {/* total kendaraan terparkir */}
+            {/* total kendaraan terparkir */}
             <div className="rounded-2xl bg-white p-5 text-center shadow">
               <h3 className="mb-2 font-medium text-gray-600">Total Kendaraan Terparkir</h3>
               <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-blue-200">
                 <div
                   className="h-2 rounded-full bg-blue-600 transition-all"
-                  style={{ width: `${mobilProgress}%` }}
+                  style={{ width: `${parkedProgress}%` }}
                 />
               </div>
-              <p className="text-sm text-gray-500">Mobil & motor</p>
-              <p className="text-3xl font-bold text-blue-600">{totalMobil}</p>
+              <p className="text-sm text-gray-500">Parked / Total</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {totalIsParked} / {totalVehiclesAll}
+              </p>
             </div>
           </div>
 
@@ -213,7 +224,7 @@ export default function DashboardPage() {
               >
                 + Tambah Kendaraan
               </button>
-                 <button
+              <button
                 onClick={() => router.push("/kendaraan/realtime")}
                 className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:cursor-pointer hover:bg-blue-700"
               >
