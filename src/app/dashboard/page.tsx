@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getAllVehicles, getParkirOverview } from "@/lib/api";
+import { getAllVehicles, useParkirOverview } from "@/lib/api";
 
 import LoadingAnimation from "@/components/Loading";
 import NextImage from "@/components/NextImage";
@@ -21,46 +21,55 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 export default function DashboardPage() {
   const [vehicles, setVehicles] = useState<any[]>([]);
-  const [parkirOverview, setParkirOverview] = useState({
-    totalVehicles: 0,
-    totalIsParkedVehicle: 0,
-    totalIsNotParkedVehicle: 0,
-  });
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
+
   const router = useRouter();
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
+  // 🔥 React Query for Parkir Overview
+  const {
+    data: parkirOverviewData,
+    isLoading: loadingParkir,
+  } = useParkirOverview();
+
+  // fetch all vehicles (belum kamu pindah ke React Query)
   useEffect(() => {
     async function load() {
       try {
-        // Ambil semua kendaraan
         const all = await getAllVehicles();
         setVehicles(all?.data || []);
-
-        // Ambil overview parkir (axios)
-        const parkir = await getParkirOverview();
-        if (parkir?.data) {
-          setParkirOverview(parkir.data);
-        }
       } catch (err) {
-        console.error("Dashboard load error:", err);
+        console.error("Dashboard load vehicles error:", err);
       } finally {
-        setLoading(false);
+        setLoadingVehicles(false);
       }
     }
     load();
   }, []);
 
+  const loading = loadingVehicles || loadingParkir;
+
+  if (loading) return <LoadingAnimation />;
+
+  // 🔥 Data dari React Query
+  const parkirOverview = parkirOverviewData?.data || {
+    totalVehicles: 0,
+    totalIsParkedVehicle: 0,
+    totalIsNotParkedVehicle: 0,
+  };
+
+  const totalIsParked = parkirOverview.totalIsParkedVehicle;
+  const totalVehiclesAll = parkirOverview.totalVehicles;
+
+  // search
   const filtered = vehicles.filter((v) =>
     v.plateNumber.toLowerCase().includes(query.toLowerCase())
   );
 
-  if (loading) return <LoadingAnimation />;
-
-  //right sidebar calculations progress bars
+  // progress bar logic
   const totalMotor = vehicles.filter(
     (v) => v.type.toLowerCase() === "motor"
   ).length;
@@ -70,21 +79,18 @@ export default function DashboardPage() {
 
   const maxMotor = 250;
   const maxMobil = 20;
+  const totalMax = maxMotor + maxMobil;
 
   const motorProgress = Math.min((totalMotor / maxMotor) * 100, 100);
   const mobilProgress = Math.min((totalMobil / maxMobil) * 100, 100);
-
-  const totalMax = maxMotor + maxMobil;
   const totalProgress = Math.min(
     ((totalMotor + totalMobil) / totalMax) * 100,
     100
   );
-
-  // ambil dari api
-  const totalIsParked = parkirOverview.totalIsParkedVehicle || 0;
-  const totalVehiclesAll = parkirOverview.totalVehicles || 0;
   const parkedProgress =
-    totalVehiclesAll > 0 ? Math.min((totalIsParked / totalVehiclesAll) * 100, 100) : 0;
+    totalVehiclesAll > 0
+      ? Math.min((totalIsParked / totalVehiclesAll) * 100, 100)
+      : 0;
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#4A4E57] via-[#D5D5D5] to-[#F5F5F5]">
@@ -104,7 +110,6 @@ export default function DashboardPage() {
             </h1>
           </div>
 
-          {/* RIGHT PROFILE AREA */}
           <div className="flex items-center gap-3">
             <div className="text-right leading-tight">
               <p className="text-sm font-medium">{user?.name}</p>
@@ -187,9 +192,11 @@ export default function DashboardPage() {
               <p className="text-3xl font-bold text-blue-600">{totalMobil}</p>
             </div>
 
-            {/* total kendaraan terparkir */}
+            {/* Total kendaraan terparkir */}
             <div className="rounded-2xl bg-white p-5 text-center shadow">
-              <h3 className="mb-2 font-medium text-gray-600">Total Kendaraan Terparkir</h3>
+              <h3 className="mb-2 font-medium text-gray-600">
+                Total Kendaraan Terparkir
+              </h3>
               <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-blue-200">
                 <div
                   className="h-2 rounded-full bg-blue-600 transition-all"
@@ -203,7 +210,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* TABLE SECTION */}
+          {/* TABLE */}
           <div className="order-2 col-span-1 rounded-2xl bg-white p-6 shadow md:order-1 md:col-span-2">
             <h2 className="mb-1 text-xl font-semibold">Cek Data Kendaraan</h2>
             <p className="mb-4 text-sm text-gray-500">
@@ -218,15 +225,17 @@ export default function DashboardPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 rounded-full border px-4 py-2 transition focus:border-blue-500 focus:ring-1 focus:ring-blue-400"
               />
+
               <button
                 onClick={() => router.push("/kendaraan/tambah")}
-                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:cursor-pointer hover:bg-blue-700"
+                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 + Tambah Kendaraan
               </button>
+
               <button
                 onClick={() => router.push("/kendaraan/realtime")}
-                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:cursor-pointer hover:bg-blue-700"
+                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 Real Time Camera
               </button>

@@ -1,4 +1,5 @@
 // src/lib/api.ts
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { GetServerSidePropsContext } from "next/types";
 import Cookies from "universal-cookie";
@@ -143,5 +144,11 @@ export async function getParkirOverview() {
   }
 }
 
-
+export const useParkirOverview = () => {
+  return useQuery({
+    queryKey: ["parkir-overview"],   // penting: sama dengan invalidate
+    queryFn: getParkirOverview,
+    refetchOnWindowFocus: false,     // opsional
+  });
+};
 export default api;

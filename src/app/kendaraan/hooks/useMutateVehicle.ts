@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -113,6 +113,7 @@ export const useUpdateVehicle = () => {
 
 // ==== Toggle Parking Hook =====
 export const useToggleParking = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       id,
@@ -125,8 +126,12 @@ export const useToggleParking = () => {
       return res.data;
     },
 
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Status parkir berhasil diupdate");
+      queryClient.invalidateQueries({
+        queryKey: ["parkir-overview"],
+        exact: true,
+      });
     },
 
     onError: (error: any) => {

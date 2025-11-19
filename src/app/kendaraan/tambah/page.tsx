@@ -67,8 +67,10 @@ export default function TambahKendaraanPage() {
     },
   });
 
-  const { mutate: checkPlate, isPending: isPendingCheckPlate } = usePlateNumberCheck();
-  const { mutate: createVehicle, isPending: isPendingCreateVehicle } = useCreateVehicle();
+  const { mutate: checkPlate, isPending: isPendingCheckPlate } =
+    usePlateNumberCheck();
+  const { mutate: createVehicle, isPending: isPendingCreateVehicle } =
+    useCreateVehicle();
   const { data, isLoading: isLoadingGetUsers } = useGetUsers(isAdmin);
   const users = data?.data;
 
@@ -125,8 +127,12 @@ export default function TambahKendaraanPage() {
       },
       onError: (error) => {
         const err = error as AxiosError<ApiError>;
-        const msg = err.response?.data?.message || err.response?.data?.messsage || "";
-        if (msg.includes("Unique constraint failed") && msg.includes("plateNumber")) {
+        const msg =
+          err.response?.data?.message || err.response?.data?.messsage || "";
+        if (
+          msg.includes("Unique constraint failed") &&
+          msg.includes("plateNumber")
+        ) {
           toast.error("Plat nomor sudah terdaftar!", {
             description: "Silakan cek kembali atau gunakan plat nomor lain.",
           });
@@ -143,8 +149,26 @@ export default function TambahKendaraanPage() {
     <div className="flex h-screen bg-gradient-to-b from-[#B6B6B6] via-[#FFFFFF] to-[#B8D3FF]">
       <div className="flex w-full flex-col justify-center px-16">
         <div className="mx-auto max-w-lg rounded-xl bg-white p-10 shadow-md">
-          <h2 className="mb-1 text-2xl font-bold text-gray-800">Tambah Kendaraan</h2>
-          <p className="mb-6 text-sm text-gray-500">Mohon Lengkapi Data Kendaraan</p>
+          <div className="mt-1 text-center mb-5">
+            <Button
+              variant="ghost"
+              onClick={() =>
+                router.push(
+                  userRole === "admin" ? "/dashboard" : "/dashboard/user"
+                )
+              }
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Kembali ke Dashboard
+            </Button>
+          </div>
+          <h2 className="mb-1 text-2xl font-bold text-gray-800">
+            Tambah Kendaraan
+          </h2>
+          <p className="mb-6 text-sm text-gray-500">
+            Mohon Lengkapi Data Kendaraan
+          </p>
 
           <div className="max-h-[70vh] overflow-y-auto pr-2">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -156,7 +180,10 @@ export default function TambahKendaraanPage() {
                     control={control}
                     rules={{ required: "Email user wajib dipilih" }}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Pilih email user" />
                         </SelectTrigger>
@@ -170,7 +197,11 @@ export default function TambahKendaraanPage() {
                       </Select>
                     )}
                   />
-                  {errors.userId && <p className="text-sm text-red-500">* {errors.userId.message}</p>}
+                  {errors.userId && (
+                    <p className="text-sm text-red-500">
+                      * {errors.userId.message}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -182,7 +213,9 @@ export default function TambahKendaraanPage() {
                     <Input
                       type="file"
                       accept="image/png, image/jpg, image/jpeg"
-                      onChange={(e) => setValue("imageFile", e.target.files?.[0] || null)}
+                      onChange={(e) =>
+                        setValue("imageFile", e.target.files?.[0] || null)
+                      }
                     />
                     <Button
                       type="button"
@@ -190,11 +223,11 @@ export default function TambahKendaraanPage() {
                       onClick={() => setUseCamera(true)}
                       className="flex items-center gap-2"
                     >
-                      <Camera className="w-4 h-4" /> Gunakan Kamera
+                      <Camera className="h-4 w-4" /> Gunakan Kamera
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2 items-center">
+                  <div className="flex flex-col items-center gap-2">
                     <Webcam
                       ref={webcamRef}
                       screenshotFormat="image/jpeg"
@@ -202,7 +235,11 @@ export default function TambahKendaraanPage() {
                       className="rounded-lg border"
                     />
                     <div className="flex gap-2">
-                      <Button onClick={capturePhoto} type="button" className="bg-blue-600">
+                      <Button
+                        onClick={capturePhoto}
+                        type="button"
+                        className="bg-blue-600"
+                      >
                         Ambil Foto
                       </Button>
                       <Button
@@ -211,7 +248,7 @@ export default function TambahKendaraanPage() {
                         variant="outline"
                         className="flex items-center gap-2"
                       >
-                        <Upload className="w-4 h-4" /> Upload File
+                        <Upload className="h-4 w-4" /> Upload File
                       </Button>
                     </div>
                   </div>
@@ -226,14 +263,18 @@ export default function TambahKendaraanPage() {
                 <Label>Plat Nomor</Label>
                 <Input
                   placeholder="cth: L 111 ITS"
-                  {...register("plateNumber", { required: "Plat nomor wajib diisi" })}
+                  {...register("plateNumber", {
+                    required: "Plat nomor wajib diisi",
+                  })}
                   readOnly={isPendingCheckPlate}
                 />
                 <p className="text-sm text-gray-500 italic">
                   {isPendingCheckPlate ? "Mendeteksi Plat Nomor..." : ""}
                 </p>
                 {errors.plateNumber && (
-                  <p className="text-sm text-red-500">* {errors.plateNumber.message}</p>
+                  <p className="text-sm text-red-500">
+                    * {errors.plateNumber.message}
+                  </p>
                 )}
               </div>
 
@@ -255,36 +296,56 @@ export default function TambahKendaraanPage() {
                     </Select>
                   )}
                 />
-                {errors.type && <p className="text-sm text-red-500">* {errors.type.message}</p>}
+                {errors.type && (
+                  <p className="text-sm text-red-500">
+                    * {errors.type.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Merk Kendaraan</Label>
                 <Input
-                  {...register("brand", { required: "Merk kendaraan wajib diisi" })}
+                  {...register("brand", {
+                    required: "Merk kendaraan wajib diisi",
+                  })}
                   placeholder="cth: Suzuki"
                 />
-                {errors.brand && <p className="text-sm text-red-500">* {errors.brand.message}</p>}
+                {errors.brand && (
+                  <p className="text-sm text-red-500">
+                    * {errors.brand.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Model Kendaraan</Label>
                 <Input
-                  {...register("modelName", { required: "Model kendaraan wajib diisi" })}
+                  {...register("modelName", {
+                    required: "Model kendaraan wajib diisi",
+                  })}
                   placeholder="cth: XL7"
                 />
                 {errors.modelName && (
-                  <p className="text-sm text-red-500">* {errors.modelName.message}</p>
+                  <p className="text-sm text-red-500">
+                    * {errors.modelName.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label>Warna Kendaraan</Label>
                 <Input
-                  {...register("color", { required: "Warna kendaraan wajib diisi" })}
+                  {...register("color", {
+                    required: "Warna kendaraan wajib diisi",
+                  })}
                   placeholder="cth: Hitam"
                 />
-                {errors.color && <p className="text-sm text-red-500">* {errors.color.message}</p>}
+                {errors.color && (
+                  <p className="text-sm text-red-500">
+                    * {errors.color.message}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end">
@@ -294,19 +355,6 @@ export default function TambahKendaraanPage() {
                   disabled={isPendingCreateVehicle || !watch("imageUrl")}
                 >
                   {isPendingCreateVehicle ? "Loading..." : "Tambah"}
-                </Button>
-              </div>
-
-              <div className="mt-1 text-center">
-                <Button
-                  variant="ghost"
-                  onClick={() =>
-                    router.push(userRole === "admin" ? "/dashboard" : "/dashboard/user")
-                  }
-                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Kembali ke Dashboard
                 </Button>
               </div>
             </form>
