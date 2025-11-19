@@ -53,7 +53,7 @@ export default function RealTimePlateMonitor() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning) interval = setInterval(captureFrame, 10000);
+    if (isRunning) interval = setInterval(captureFrame, 7000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
