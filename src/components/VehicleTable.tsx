@@ -15,7 +15,7 @@ interface Vehicle {
   modelName: string;
   color: string;
   type: string;
-  isParked: boolean;  
+  isParked: boolean;
   user: {
     name: string;
     email: string;
@@ -35,41 +35,41 @@ export default function VehicleTable({ data }: Props) {
   const { mutate: toggleParking } = useToggleParking();
   // Sinkronkan state awal dengan data dari backend
   useEffect(() => {
-  const initialState: Record<number, boolean> = {};
+    setParkingState((prev) => {
+      if (Object.keys(prev).length !== 0) return prev;
 
-  data.forEach((vehicle) => {
-    // Pastikan backend punya field isParked
-    initialState[vehicle.id] = vehicle.isParked ?? false;
-  });
+      const initial: Record<number, boolean> = {};
 
-  setParkingState(initialState);
-}, [data]);
+      data.forEach((vehicle) => {
+        initial[vehicle.id] = vehicle.isParked ?? false;
+      });
 
+      return initial;
+    });
+  }, [data]);
 
-const handleToggle = (id: number, val: boolean) => {
-  const status = val ? "in" : "out";
+  const handleToggle = (id: number, val: boolean) => {
+    const status = val ? "in" : "out";
 
-  // Update UI dulu (optimistic UI)
-  setParkingState((prev) => ({
-    ...prev,
-    [id]: val,
-  }));
+    // Update UI dulu (optimistic UI)
+    setParkingState((prev) => ({
+      ...prev,
+      [id]: val,
+    }));
 
-  toggleParking(
-    { id, status },
-    {
-      onError: () => {
-        // rollback UI jika gagal
-        setParkingState((prev) => ({
-          ...prev,
-          [id]: !val,
-        }));
-      },
-    }
-  );
-};
-
-
+    toggleParking(
+      { id, status },
+      {
+        onError: () => {
+          // rollback UI jika gagal
+          setParkingState((prev) => ({
+            ...prev,
+            [id]: !val,
+          }));
+        },
+      }
+    );
+  };
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -102,7 +102,7 @@ const handleToggle = (id: number, val: boolean) => {
                 Model
               </th>
 
-              <th className="w-[80px] p-4 text-center text-sm font-semibold">
+              <th className="w-20 p-4 text-center text-sm font-semibold">
                 Aksi
               </th>
             </tr>
@@ -162,12 +162,10 @@ const handleToggle = (id: number, val: boolean) => {
                     <div className="flex justify-center">
                       <Switch
                         checked={parkingState[vehicle.id] ?? false}
-                        onCheckedChange={(val) =>
-                          handleToggle(vehicle.id, val)
-                        }
+                        onCheckedChange={(val) => handleToggle(vehicle.id, val)}
                       />
                       <span className="ml-2 text-sm font-medium">
-                        {parkingState[vehicle.id] ? "in" : "out"}
+                        {parkingState[vehicle.id] ? "In" : "Out"}
                       </span>
                     </div>
                   </td>

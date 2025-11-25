@@ -127,11 +127,10 @@ export const useToggleParking = () => {
     },
 
     onSuccess: () => {
-      toast.success("Status parkir berhasil diupdate");
       queryClient.invalidateQueries({
         queryKey: ["parkir-overview"],
-        exact: true,
       });
+      toast.success("Status parkir berhasil diupdate");
     },
 
     onError: (error: any) => {

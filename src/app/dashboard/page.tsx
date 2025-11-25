@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
   if (loading) return <LoadingAnimation />;
 
-  // 🔥 Data dari React Query
+  // Data dari React Query
   const parkirOverview = parkirOverviewData?.data || {
     totalVehicles: 0,
     totalIsParkedVehicle: 0,
@@ -93,7 +93,7 @@ export default function DashboardPage() {
       : 0;
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#4A4E57] via-[#D5D5D5] to-[#F5F5F5]">
+    <div className="flex min-h-screen flex-col bg-linear-to-b from-[#4A4E57] via-[#D5D5D5] to-[#F5F5F5]">
       {/* HEADER */}
       <div className="px-6 pt-4">
         <header className="flex w-full items-center justify-between rounded-2xl bg-white px-6 py-3 text-gray-600 shadow-lg">
