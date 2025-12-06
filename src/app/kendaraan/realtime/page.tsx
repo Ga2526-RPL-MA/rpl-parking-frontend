@@ -146,41 +146,13 @@ export default function RealTimePlateMonitor() {
         Real-time Plate Monitoring
       </h1>
 
-      {/* COUNTDOWN OVERLAY */}
+      {/* COUNTDOWN OVERLAY
       {countdown !== null && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md">
-          <div className="mb-6 animate-pulse text-center text-2xl font-semibold text-white">
-            Plat diScan! Jaga device-mu tetap stabil ya..
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="mb-6 flex h-40 w-40 items-center justify-center rounded-full border-4 border-white">
-              <span className="text-6xl font-bold text-white">{countdown}</span>
-            </div>
-
-            {/* Mini webcam preview */}
-            <div className="w-90 overflow-hidden rounded-lg border-2 border-white shadow-xl">
-              <Webcam
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: "environment" }}
-                className="h-auto w-full"
-              />
-            </div>
-
-            <Button
-              onClick={() => {
-                setCountdown(null); 
-                setIsRunning(false); 
-                setLastPlate(null); 
-              }}
-              className="mt-6 rounded-lg bg-red-600 px-6 py-2 text-white hover:bg-red-700"
-            >
-              Stop Monitoring
-            </Button>
-          </div>
+        <div className="absolute top-4 left-1/2 z-40 -translate-x-1/2 rounded-lg bg-black/80 px-4 py-2 text-white shadow-lg">
+        <span className="font-bold">Tolong Stabilkan kamera anda selama di monitoring</span> 
         </div>
-      )}
+      )} */}
+
 
       <div className="mt-1 text-center">
         <Button
@@ -196,12 +168,21 @@ export default function RealTimePlateMonitor() {
       <Card className="w-full max-w-3xl p-4 shadow-lg">
         <CardContent className="flex flex-col items-center gap-3">
           {/* WEBCAM RESPONSIVE */}
+       <div className="relative w-full">
+          {countdown !== null && (
+            <div className="absolute top-4 left-1/2 z-40 -translate-x-1/2 rounded-lg bg-black/80 px-4 py-2 text-white shadow-lg">
+              Mulai dalam <span className="font-bold">{countdown}</span> detik...
+            </div>
+          )}
+
           <Webcam
             ref={webcamRef}
             screenshotFormat="image/jpeg"
             videoConstraints={{ facingMode: "environment" }}
             className="h-auto w-full rounded-lg border"
           />
+        </div>
+
 
           {/* BUTTONS RESPONSIVE */}
           <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
@@ -209,6 +190,7 @@ export default function RealTimePlateMonitor() {
               onClick={() => {
                 if (isRunning) {
                   setIsRunning(false);
+                  setCountdown(null);
                 } else {
                   setCountdown(7);
                 }
