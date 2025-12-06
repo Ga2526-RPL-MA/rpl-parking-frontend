@@ -32,24 +32,26 @@ export default function RealTimePlateMonitor() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string>("user");
 
-  // Countdown 10 detik sebelum monitoring dimulai
   useEffect(() => {
     if (countdown === null) return;
-    if (countdown === 10) {
-      setIsRunning(true); // Langsung jalan saat countdown dimulai
+  
+    if (countdown === 7) {
+      setIsRunning(true);
     }
-
-    if (countdown === 0) {
-      setCountdown(null); // Overlay hilang
-      return;
-    }
-
+  
     const timer = setTimeout(() => {
-      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+      setCountdown((prev) => {
+        if (prev === null) return null;
+  
+        if (prev === 0) return 7;
+  
+        return prev - 1;
+      });
     }, 1000);
-
+  
     return () => clearTimeout(timer);
   }, [countdown]);
+  
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -82,7 +84,6 @@ export default function RealTimePlateMonitor() {
         return;
       }
 
-      // Jika backend mengirim "UNKNOWN"
       if (detectedData === "UNKNOWN") {
         toast.warning("Plat tidak terdeteksi");
         return;
@@ -128,9 +129,6 @@ export default function RealTimePlateMonitor() {
     }
   };
 
-  {
-    /* fungsi back to dashboard by role */
-  }
   useEffect(() => {
     const userData = sessionStorage.getItem("user");
     if (userData) {
@@ -155,7 +153,6 @@ export default function RealTimePlateMonitor() {
             Plat diScan! Jaga device-mu tetap stabil ya..
           </div>
 
-          {/* Countdown Circle */}
           <div className="flex flex-col items-center">
             <div className="mb-6 flex h-40 w-40 items-center justify-center rounded-full border-4 border-white">
               <span className="text-6xl font-bold text-white">{countdown}</span>
@@ -170,6 +167,17 @@ export default function RealTimePlateMonitor() {
                 className="h-auto w-full"
               />
             </div>
+
+            <Button
+              onClick={() => {
+                setCountdown(null); 
+                setIsRunning(false); 
+                setLastPlate(null); 
+              }}
+              className="mt-6 rounded-lg bg-red-600 px-6 py-2 text-white hover:bg-red-700"
+            >
+              Stop Monitoring
+            </Button>
           </div>
         </div>
       )}
@@ -202,7 +210,7 @@ export default function RealTimePlateMonitor() {
                 if (isRunning) {
                   setIsRunning(false);
                 } else {
-                  setCountdown(10); // countdown 10s
+                  setCountdown(7);
                 }
               }}
               className={isRunning ? "bg-red-600" : "bg-blue-600"}
