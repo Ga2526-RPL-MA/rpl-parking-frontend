@@ -1,4 +1,5 @@
 // src/lib/api.ts
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { GetServerSidePropsContext } from "next/types";
 import Cookies from "universal-cookie";
@@ -132,4 +133,22 @@ export const getOwnVehicles = async () => {
   return data;
 };
 
+export async function getParkirOverview() {
+  try {
+    const res = await api.get("/vehicles/parkir");
+    // axios menyimpan body di res.data
+    return res.data; 
+  } catch (err) {
+    console.error("getParkirOverview error:", err);
+    throw err;
+  }
+}
+
+export const useParkirOverview = () => {
+  return useQuery({
+    queryKey: ["parkir-overview"],   // penting: sama dengan invalidate
+    queryFn: getParkirOverview,
+    refetchOnWindowFocus: false,     // opsional
+  });
+};
 export default api;

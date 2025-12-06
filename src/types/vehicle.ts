@@ -1,10 +1,13 @@
-export type Vehicle = {
-  id: string;
+export type Vehicle ={
+  id: number;
   plateNumber: string;
-  image: string;
-  type: "motor" | "mobil";
   brand: string;
   modelName: string;
   color: string;
-  userId: string;
-};
+  type: string;
+  isParked: boolean;  
+  user: {
+    name: string;
+    email: string;
+  };
+}

@@ -1,6 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useEffect } from "react";
+
+import { Switch } from "@/components/ui/switch";
+
+import { useToggleParking } from "@/app/kendaraan/hooks/useMutateVehicle";
 
 interface Vehicle {
   id: number;
@@ -9,6 +15,7 @@ interface Vehicle {
   modelName: string;
   color: string;
   type: string;
+  isParked: boolean;
   user: {
     name: string;
     email: string;
@@ -22,12 +29,52 @@ interface Props {
 export default function VehicleTable({ data }: Props) {
   const router = useRouter();
 
+  // State toggle parkir untuk masing-masing kendaraan
+  const [parkingState, setParkingState] = useState<Record<number, boolean>>({});
+
+  const { mutate: toggleParking } = useToggleParking();
+  // Sinkronkan state awal dengan data dari backend
+  useEffect(() => {
+    setParkingState((prev) => {
+      if (Object.keys(prev).length !== 0) return prev;
+
+      const initial: Record<number, boolean> = {};
+
+      data.forEach((vehicle) => {
+        initial[vehicle.id] = vehicle.isParked ?? false;
+      });
+
+      return initial;
+    });
+  }, [data]);
+
+  const handleToggle = (id: number, val: boolean) => {
+    const status = val ? "in" : "out";
+
+    // Update UI dulu (optimistic UI)
+    setParkingState((prev) => ({
+      ...prev,
+      [id]: val,
+    }));
+
+    toggleParking(
+      { id, status },
+      {
+        onError: () => {
+          // rollback UI jika gagal
+          setParkingState((prev) => ({
+            ...prev,
+            [id]: !val,
+          }));
+        },
+      }
+    );
+  };
+
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-      {/* Scroll container */}
       <div className="max-h-[400px] overflow-auto">
         <table className="w-full table-fixed">
-          {/* Sticky Header */}
           <thead className="sticky top-0 z-10 bg-blue-600 text-white">
             <tr>
               <th className="w-[120px] p-4 text-center text-sm font-semibold">
@@ -38,8 +85,13 @@ export default function VehicleTable({ data }: Props) {
                 Pemilik
               </th>
 
-              <th className="w-[100px] p-4 text-center text-sm font-semibold">
+              <th className="w-[140px] p-4 text-center text-sm font-semibold">
                 Jenis
+              </th>
+
+              {/* Toggle Parkir — Kolom Baru */}
+              <th className="w-[120px] p-4 text-center text-sm font-semibold">
+                Parkir
               </th>
 
               <th className="w-[120px] p-4 text-center text-sm font-semibold">
@@ -50,11 +102,7 @@ export default function VehicleTable({ data }: Props) {
                 Model
               </th>
 
-              <th className="w-[120px] p-4 text-center text-sm font-semibold">
-                Warna
-              </th>
-
-              <th className="w-[80px] p-4 text-center text-sm font-semibold">
+              <th className="w-20 p-4 text-center text-sm font-semibold">
                 Aksi
               </th>
             </tr>
@@ -109,6 +157,19 @@ export default function VehicleTable({ data }: Props) {
                     </span>
                   </td>
 
+                  {/* Toggle status Parkir */}
+                  <td className="p-4 text-center">
+                    <div className="flex justify-center">
+                      <Switch
+                        checked={parkingState[vehicle.id] ?? false}
+                        onCheckedChange={(val) => handleToggle(vehicle.id, val)}
+                      />
+                      <span className="ml-2 text-sm font-medium">
+                        {parkingState[vehicle.id] ? "In" : "Out"}
+                      </span>
+                    </div>
+                  </td>
+
                   {/* Merk */}
                   <td className="p-4 text-center font-medium text-gray-900">
                     {vehicle.brand}
@@ -117,11 +178,6 @@ export default function VehicleTable({ data }: Props) {
                   {/* Model */}
                   <td className="p-4 text-center font-medium text-gray-900">
                     {vehicle.modelName}
-                  </td>
-
-                  {/* Warna */}
-                  <td className="p-4 text-center font-medium text-gray-900">
-                    {vehicle.color}
                   </td>
 
                   {/* Aksi */}

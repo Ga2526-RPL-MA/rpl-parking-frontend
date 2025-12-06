@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { toast } from "sonner";
@@ -23,15 +25,39 @@ interface Detection {
 
 export default function RealTimePlateMonitor() {
   const webcamRef = useRef<Webcam>(null);
+  const router = useRouter();
   const [isRunning, setIsRunning] = useState(false);
   const [detections, setDetections] = useState<Detection[]>([]);
   const [lastPlate, setLastPlate] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string>("user");
+
+  useEffect(() => {
+    if (countdown === null) return;
+  
+    if (countdown === 7) {
+      setIsRunning(true);
+    }
+  
+    const timer = setTimeout(() => {
+      setCountdown((prev) => {
+        if (prev === null) return null;
+  
+        if (prev === 0) return 7;
+  
+        return prev - 1;
+      });
+    }, 1000);
+  
+    return () => clearTimeout(timer);
+  }, [countdown]);
+  
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRunning) interval = setInterval(captureFrame, 10000);
+    if (isRunning) interval = setInterval(captureFrame, 7000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
 
   const captureFrame = async () => {
@@ -44,9 +70,13 @@ export default function RealTimePlateMonitor() {
       const formData = new FormData();
       formData.append("plate", blob, "frame.jpg");
 
-      const detectResponse = await api.post("/vehicles/plate/realtime", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const detectResponse = await api.post(
+        "/vehicles/plate/realtime",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       const detectedData = detectResponse.data?.data;
       if (!detectedData) {
@@ -54,7 +84,6 @@ export default function RealTimePlateMonitor() {
         return;
       }
 
-      // Jika backend mengirim "UNKNOWN"
       if (detectedData === "UNKNOWN") {
         toast.warning("Plat tidak terdeteksi");
         return;
@@ -100,29 +129,98 @@ export default function RealTimePlateMonitor() {
     }
   };
 
+  useEffect(() => {
+    const userData = sessionStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserRole(user.role?.toLowerCase() || "user");
+    }
+  }, []);
+
+  const getDashboardPath = () =>
+    userRole === "admin" ? "/dashboard" : "/dashboard/user";
+
   return (
-    <div className="flex flex-col items-center p-8 bg-linear-to-b from-gray-100 to-blue-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Real-time Plate Monitoring</h1>
-      <Card className="p-4 shadow-lg w-[800px]">
+    <div className="flex min-h-screen flex-col items-center bg-linear-to-b from-gray-100 to-blue-50 p-4 md:p-8">
+      <h1 className="mb-4 text-xl font-bold md:text-2xl">
+        Real-time Plate Monitoring
+      </h1>
+
+      {/* COUNTDOWN OVERLAY */}
+      {countdown !== null && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md">
+          <div className="mb-6 animate-pulse text-center text-2xl font-semibold text-white">
+            Plat diScan! Jaga device-mu tetap stabil ya..
+          </div>
+
+          <div className="flex flex-col items-center">
+            <div className="mb-6 flex h-40 w-40 items-center justify-center rounded-full border-4 border-white">
+              <span className="text-6xl font-bold text-white">{countdown}</span>
+            </div>
+
+            {/* Mini webcam preview */}
+            <div className="w-90 overflow-hidden rounded-lg border-2 border-white shadow-xl">
+              <Webcam
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={{ facingMode: "environment" }}
+                className="h-auto w-full"
+              />
+            </div>
+
+            <Button
+              onClick={() => {
+                setCountdown(null); 
+                setIsRunning(false); 
+                setLastPlate(null); 
+              }}
+              className="mt-6 rounded-lg bg-red-600 px-6 py-2 text-white hover:bg-red-700"
+            >
+              Stop Monitoring
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-1 text-center">
+        <Button
+          variant="ghost"
+          onClick={() => router.push(getDashboardPath())}
+          className="flex items-center gap-1 text-sm"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Kembali ke Dashboard
+        </Button>
+      </div>
+
+      <Card className="w-full max-w-3xl p-4 shadow-lg">
         <CardContent className="flex flex-col items-center gap-3">
+          {/* WEBCAM RESPONSIVE */}
           <Webcam
             ref={webcamRef}
             screenshotFormat="image/jpeg"
             videoConstraints={{ facingMode: "environment" }}
-            className="rounded-lg border"
-            width={700}
-            height={400}
+            className="h-auto w-full rounded-lg border"
           />
-          <div className="flex gap-3 mt-3 items-center">
+
+          {/* BUTTONS RESPONSIVE */}
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
             <Button
-              onClick={() => setIsRunning(!isRunning)}
-              className={isRunning ? "bg-red-600" : "bg-green-600"}
+              onClick={() => {
+                if (isRunning) {
+                  setIsRunning(false);
+                } else {
+                  setCountdown(7);
+                }
+              }}
+              className={isRunning ? "bg-red-600" : "bg-blue-600"}
             >
               {isRunning ? "Stop Monitoring" : "Start Monitoring"}
             </Button>
+
             {lastPlate && (
               <div
-                className={`px-4 py-2 rounded-lg text-white ${
+                className={`rounded-lg px-4 py-2 text-white ${
                   detections[0]?.matched ? "bg-green-500" : "bg-red-500"
                 }`}
               >
@@ -130,9 +228,11 @@ export default function RealTimePlateMonitor() {
               </div>
             )}
           </div>
-          <div className="mt-6 w-full max-h-[350px] overflow-y-auto text-sm">
-            <table className="w-full border-collapse text-left">
-              <thead className="bg-gray-200 sticky top-0">
+
+          {/* TABLE WRAPPER RESPONSIVE */}
+          <div className="mt-6 max-h-[350px] w-full overflow-x-auto overflow-y-auto text-sm">
+            <table className="w-full min-w-[700px] border-collapse text-left">
+              <thead className="sticky top-0 bg-gray-200">
                 <tr>
                   <th className="p-2">Waktu</th>
                   <th className="p-2">Plat</th>
@@ -150,8 +250,8 @@ export default function RealTimePlateMonitor() {
                     key={idx}
                     className={`border-b ${
                       d.matched
-                        ? "text-green-700 bg-green-50"
-                        : "text-red-700 bg-red-50"
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-700"
                     }`}
                   >
                     <td className="p-2">{d.time}</td>

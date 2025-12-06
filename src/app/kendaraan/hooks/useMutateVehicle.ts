@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -105,6 +105,41 @@ export const useUpdateVehicle = () => {
         "Gagal update kendaraan";
 
       toast.error("Gagal memperbarui kendaraan", {
+        description: msg,
+      });
+    },
+  });
+};
+
+// ==== Toggle Parking Hook =====
+export const useToggleParking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: number;
+      status: "in" | "out";
+    }) => {
+      const res = await api.patch(`/vehicles/parkir/${id}`, { status });
+      return res.data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["parkir-overview"],
+      });
+      toast.success("Status parkir berhasil diupdate");
+    },
+
+    onError: (error: any) => {
+      const msg =
+        error.response?.data?.message ||
+        error.response?.data?.messsage ||
+        "Gagal update status parkir";
+
+      toast.error("Gagal update status parkir", {
         description: msg,
       });
     },

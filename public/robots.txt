@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://rpl-parking-backend.vercel.app/api
+
+# Sitemaps
+Sitemap: https://rpl-parking-backend.vercel.app/api/sitemap.xml
